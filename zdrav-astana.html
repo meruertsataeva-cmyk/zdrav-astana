@@ -288,6 +288,54 @@
     .modal{ padding:22px 18px 18px; }
   }
 
+  /* ---------- Сегодня ---------- */
+  .nav-sep{ height:1px; background:rgba(255,255,255,0.1); margin:8px 12px; }
+  .nav-count.hot{ color:#E08A6E; font-weight:600; }
+  .today-date{ font-family:'PT Serif',serif; font-size:15px; color:var(--color-ink-muted); margin-top:4px; }
+  .agenda{ display:flex; flex-direction:column; gap:26px; }
+  .agenda-head{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:10px; }
+  .agenda-head h2{ font-size:15px; }
+  .agenda-head .agenda-count{ font-size:12px; color:var(--color-ink-muted); }
+  .agenda-head.warn h2{ color:var(--status-blocked); }
+  .agenda-list{ border:1px solid var(--color-line); border-radius:2px; background:var(--color-surface); }
+  .agenda-item{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 16px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--color-line); }
+  .agenda-item:last-child{ border-bottom:none; }
+  .agenda-item.overdue{ box-shadow:inset 3px 0 0 var(--status-blocked); }
+  .agenda-item.is-done .task-title-text{ color:var(--color-ink-muted); text-decoration:line-through; text-decoration-color:var(--color-ink-faint); }
+  .agenda-meta{ font-size:12px; color:var(--color-ink-muted); margin-top:3px; display:flex; flex-wrap:wrap; gap:4px 12px; }
+  .agenda-meta .overdue{ color:var(--status-blocked); font-weight:600; }
+  .agenda-side{ display:flex; align-items:center; gap:10px; }
+  .agenda-empty{ padding:16px; font-size:13px; color:var(--color-ink-faint); }
+  @media (max-width:560px){ .agenda-item{ grid-template-columns:1fr; } }
+
+  /* ---------- Календарь ---------- */
+  .cal-toolbar{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .cal-month{ font-family:'PT Serif',serif; font-size:18px; min-width:9.5em; text-align:center; }
+  .cal-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--color-ink-muted); margin-bottom:14px; }
+  .cal-legend i{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); border-top:1px solid var(--color-line); border-left:1px solid var(--color-line); background:var(--color-surface); }
+  .cal-dow{ font-size:11.5px; color:var(--color-ink-muted); padding:8px 10px; border-right:1px solid var(--color-line); border-bottom:1px solid var(--color-line); background:var(--color-surface-2); }
+  .cal-dow.weekend{ color:var(--color-ink-faint); }
+  .cal-day{ min-height:112px; padding:6px 6px 8px; border-right:1px solid var(--color-line); border-bottom:1px solid var(--color-line); display:flex; flex-direction:column; gap:3px; cursor:pointer; min-width:0; }
+  .cal-day:hover{ background:var(--color-surface-2); }
+  .cal-day.out{ background:var(--color-bg); }
+  .cal-day.out .cal-num{ color:var(--color-ink-faint); }
+  .cal-day.selected{ outline:2px solid var(--color-accent); outline-offset:-2px; }
+  .cal-num{ font-size:12.5px; font-variant-numeric:tabular-nums; color:var(--color-ink-muted); width:24px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:50%; }
+  .cal-day.is-today .cal-num{ background:var(--color-accent); color:var(--color-surface); font-weight:600; }
+  .cal-chip{ font-size:11.5px; line-height:1.3; padding:2px 6px; border-radius:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border-left:3px solid transparent; cursor:pointer; }
+  .cal-chip.status-todo{ background:var(--status-todo-soft); border-left-color:var(--status-todo); color:var(--color-ink); }
+  .cal-chip.status-progress{ background:var(--status-progress-soft); border-left-color:var(--status-progress); color:var(--color-ink); }
+  .cal-chip.status-done{ background:var(--status-done-soft); border-left-color:var(--status-done); color:var(--color-ink-muted); text-decoration:line-through; }
+  .cal-chip.status-blocked{ background:var(--status-blocked-soft); border-left-color:var(--status-blocked); color:var(--color-ink); }
+  .cal-chip.overdue{ font-weight:600; color:var(--status-blocked); }
+  .cal-more{ font-size:11.5px; color:var(--color-ink-muted); padding:0 6px; }
+  .cal-panel{ margin-top:22px; }
+  .cal-wrap{ overflow-x:auto; }
+  .cal-wrap .cal-grid{ min-width:640px; }
+  .legend-todo{ background:var(--status-todo); } .legend-progress{ background:var(--status-progress); }
+  .legend-done{ background:var(--status-done); } .legend-blocked{ background:var(--status-blocked); }
+
   .toast{ position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--color-ink); color:var(--color-bg); font-size:13px; padding:10px 16px; border-radius:2px; box-shadow:var(--shadow-modal); z-index:60; max-width:calc(100% - 32px); }
 
   @media (max-width:820px){
@@ -298,6 +346,7 @@
     .nav-item{ flex:0 0 auto; border-left:none; border-bottom:2px solid transparent; }
     .nav-item.active{ border-left:none; border-bottom-color:#57B69A; }
     .nav-del{ opacity:0.6; }
+    .nav-sep{ display:none; }
     .btn-add-block{ margin-top:8px; align-self:flex-start; padding:7px 12px; }
     .sidebar-spacer{ display:none; }
     .sidebar-footer{ display:none; }
@@ -624,6 +673,14 @@
     var html = '';
     html += '<div class="nav-item'+(currentBlockId==='overview'?' active':'')+'" data-action="nav-select" data-block="overview" tabindex="0" role="button">'
       + '<span class="nav-item-label">Обзор</span></div>';
+    var td = todayBuckets();
+    var hot = td.overdue.length + td.today.filter(function(x){ return x.task.status!=='done'; }).length;
+    html += '<div class="nav-item'+(currentBlockId==='today'?' active':'')+'" data-action="nav-select" data-block="today" tabindex="0" role="button">'
+      + '<span class="nav-item-label">Сегодня</span>'
+      + '<span class="nav-count'+(td.overdue.length?' hot':'')+'">'+hot+'</span></div>';
+    html += '<div class="nav-item'+(currentBlockId==='calendar'?' active':'')+'" data-action="nav-select" data-block="calendar" tabindex="0" role="button">'
+      + '<span class="nav-item-label">Календарь</span></div>';
+    html += '<div class="nav-sep" aria-hidden="true"></div>';
     state.blocks.forEach(function(b){
       var stats = blockStats(b);
       var count = b.kind==='kpi' ? (stats.achieved+'/'+stats.total) : (stats.done+'/'+stats.total);
@@ -652,6 +709,8 @@
   function render(){
     renderNav();
     if(currentBlockId==='overview'){ renderOverview(); }
+    else if(currentBlockId==='today'){ renderToday(); }
+    else if(currentBlockId==='calendar'){ renderCalendar(); }
     else {
       var block = state.blocks.find(function(b){ return b.id===currentBlockId; });
       if(!block){ currentBlockId='overview'; renderOverview(); return; }
@@ -722,6 +781,170 @@
 
     html += '</div>';
     content.innerHTML = html;
+  }
+
+  /* ============ Рендер: Сегодня ============ */
+  var MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  var DOW_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  function isoOf(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function addDays(iso, n){ var d = new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return isoOf(d); }
+  function longDate(iso){
+    var d = new Date(iso+'T00:00:00');
+    var s = d.toLocaleDateString('ru-RU', {weekday:'long', day:'numeric', month:'long'});
+    return s.charAt(0).toUpperCase()+s.slice(1);
+  }
+  function allTasks(){
+    var items = [];
+    state.blocks.forEach(function(b){
+      if(b.kind==='kpi') return;
+      b.tasks.forEach(function(tk){ items.push({task:tk, block:b}); });
+    });
+    return items;
+  }
+  var PRIORITY_RANK = {high:0, medium:1, low:2};
+  function byDueThenPriority(a,b){
+    if(a.task.due!==b.task.due) return a.task.due < b.task.due ? -1 : 1;
+    return (PRIORITY_RANK[a.task.priority]||1) - (PRIORITY_RANK[b.task.priority]||1);
+  }
+  function todayBuckets(){
+    var today = todayStr(), weekEnd = addDays(today, 7);
+    var res = {overdue:[], blockedPast:[], today:[], week:[]};
+    allTasks().forEach(function(it){
+      var tk = it.task;
+      if(!tk.due) return;
+      if(tk.due===today){ res.today.push(it); return; }
+      if(tk.status==='done') return;
+      if(tk.due < today){ if(tk.status==='blocked') res.blockedPast.push(it); else res.overdue.push(it); }
+      else if(tk.due <= weekEnd) res.week.push(it);
+    });
+    res.overdue.sort(byDueThenPriority); res.blockedPast.sort(byDueThenPriority);
+    res.today.sort(function(a,b){ return (a.task.status==='done') - (b.task.status==='done') || byDueThenPriority(a,b); });
+    res.week.sort(byDueThenPriority);
+    return res;
+  }
+
+  function agendaItemHtml(it, showDate){
+    var tk = it.task, b = it.block, today = todayStr();
+    var overdue = isOverdue(tk);
+    var st = STATUS_LABEL[tk.status] ? tk.status : 'todo';
+    var pr = PRIORITY_LABEL[tk.priority] ? tk.priority : 'medium';
+    var when = '';
+    if(showDate){
+      var diff = daysBetween(today, tk.due);
+      when = diff<0 ? '<span class="overdue">'+fmtDate(tk.due)+' · просрочено на '+(-diff)+' '+plural(-diff,'день','дня','дней')+'</span>'
+        : diff===0 ? 'сегодня'
+        : diff===1 ? 'завтра, '+fmtDate(tk.due)
+        : fmtDate(tk.due)+' · через '+diff+' '+plural(diff,'день','дня','дней');
+    }
+    return '<div class="agenda-item'+(overdue?' overdue':'')+(st==='done'?' is-done':'')+'">'
+      + '<div style="min-width:0;"><div class="task-title-text" data-action="edit-task" data-block="'+esc(b.id)+'" data-task="'+esc(tk.id)+'" tabindex="0" role="button">'+esc(tk.title)+'</div>'
+      + '<div class="agenda-meta"><span>'+esc(b.title)+'</span><span>'+esc(tk.owner||'без ответственного')+'</span>'
+      + '<span class="priority-'+pr+'"><span class="priority-dot"></span>'+PRIORITY_LABEL[pr]+'</span>'
+      + (when ? '<span>'+when+'</span>' : '')
+      + (tk.notes ? '<span>'+esc(tk.notes)+'</span>' : '')
+      + '</div></div>'
+      + '<div class="agenda-side"><select class="status-select status-'+st+'" id="agenda-status-'+esc(tk.id)+'" aria-label="Статус задачи" data-action="set-status" data-block="'+esc(b.id)+'" data-task="'+esc(tk.id)+'">'
+      +   Object.keys(STATUS_LABEL).map(function(s){ return '<option value="'+s+'"'+(s===st?' selected':'')+'>'+STATUS_LABEL[s]+'</option>'; }).join('')
+      + '</select></div></div>';
+  }
+  function agendaSection(title, items, opts){
+    opts = opts || {};
+    if(!items.length && opts.hideEmpty) return '';
+    return '<section><div class="agenda-head'+(opts.warn && items.length?' warn':'')+'"><h2>'+title+'</h2>'
+      + '<span class="agenda-count">'+items.length+' '+plural(items.length,'задача','задачи','задач')+'</span></div>'
+      + '<div class="agenda-list">'
+      + (items.length ? items.map(function(it){ return agendaItemHtml(it, opts.showDate); }).join('') : '<div class="agenda-empty">'+esc(opts.empty||'Нет задач')+'</div>')
+      + '</div></section>';
+  }
+
+  function renderToday(){
+    var today = todayStr();
+    var bk = todayBuckets();
+    var openToday = bk.today.filter(function(x){ return x.task.status!=='done'; }).length;
+    var topbar = document.getElementById('topbar');
+    topbar.innerHTML =
+      '<div><h1 class="topbar-title">Задачи на сегодня</h1>'
+      + '<div class="today-date">'+longDate(today)+'</div>'
+      + '<div class="topbar-desc">'
+      + (bk.overdue.length ? 'Просрочено: '+bk.overdue.length+' · ' : '')
+      + 'со сроком сегодня: '+openToday+' открыто из '+bk.today.length
+      + ' · на ближайшие 7 дней: '+bk.week.length+'</div></div>'
+      + '<div class="topbar-actions"><button class="btn btn-primary" type="button" data-action="add-task-date" data-date="'+today+'">+ Задача на сегодня</button></div>';
+
+    document.getElementById('content').innerHTML = '<div class="agenda">'
+      + agendaSection('Просрочено — сделать в первую очередь', bk.overdue, {warn:true, showDate:true, hideEmpty:true})
+      + agendaSection('Срок сегодня', bk.today, {empty:'На сегодня задач со сроком нет. Ниже — что приближается.'})
+      + agendaSection('Заблокированы, срок прошёл — нужно снять блокировку', bk.blockedPast, {showDate:true, hideEmpty:true})
+      + agendaSection('Ближайшие 7 дней', bk.week, {showDate:true, empty:'На неделю вперёд задач нет.'})
+      + '</div>';
+  }
+
+  /* ============ Рендер: Календарь ============ */
+  var calMonth = null;      /* 'YYYY-MM' */
+  var calSelected = null;   /* 'YYYY-MM-DD' */
+  function renderCalendar(){
+    var today = todayStr();
+    if(!calMonth) calMonth = today.slice(0,7);
+    if(!calSelected) calSelected = today;
+    var y = Number(calMonth.slice(0,4)), m = Number(calMonth.slice(5,7))-1;
+
+    var byDate = {};
+    var monthCount = 0;
+    allTasks().forEach(function(it){
+      if(!it.task.due) return;
+      (byDate[it.task.due] = byDate[it.task.due] || []).push(it);
+      if(it.task.due.slice(0,7)===calMonth) monthCount++;
+    });
+    Object.keys(byDate).forEach(function(k){ byDate[k].sort(byDueThenPriority); });
+
+    var topbar = document.getElementById('topbar');
+    topbar.innerHTML =
+      '<div><h1 class="topbar-title">Календарь сроков</h1>'
+      + '<div class="topbar-desc">Сроки задач всех проектов. Нажмите на день, чтобы увидеть список, или на задачу, чтобы открыть её.</div></div>'
+      + '<div class="topbar-actions cal-toolbar">'
+      + '<button class="btn" type="button" data-action="cal-shift" data-shift="-1" aria-label="Предыдущий месяц">←</button>'
+      + '<div class="cal-month" aria-live="polite">'+MONTHS[m]+' '+y+'</div>'
+      + '<button class="btn" type="button" data-action="cal-shift" data-shift="1" aria-label="Следующий месяц">→</button>'
+      + '<button class="btn" type="button" data-action="cal-today">Сегодня</button>'
+      + '</div>';
+
+    var first = new Date(y, m, 1);
+    var offset = (first.getDay()+6)%7;
+    var start = new Date(y, m, 1-offset);
+    var daysInMonth = new Date(y, m+1, 0).getDate();
+    var cells = Math.ceil((offset+daysInMonth)/7)*7;
+
+    var html = '<div class="cal-legend">'
+      + '<span><i class="legend-todo"></i>К выполнению</span><span><i class="legend-progress"></i>В работе</span>'
+      + '<span><i class="legend-done"></i>Готово</span><span><i class="legend-blocked"></i>Заблокировано</span>'
+      + '<span>· в этом месяце: '+monthCount+' '+plural(monthCount,'срок','срока','сроков')+'</span></div>';
+    html += '<div class="cal-wrap"><div class="cal-grid" role="grid">';
+    DOW_SHORT.forEach(function(d,i){ html += '<div class="cal-dow'+(i>4?' weekend':'')+'" role="columnheader">'+d+'</div>'; });
+    for(var i=0;i<cells;i++){
+      var d = new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
+      var iso = isoOf(d);
+      var list = byDate[iso] || [];
+      var cls = 'cal-day' + (d.getMonth()!==m ? ' out' : '') + (iso===today ? ' is-today' : '') + (iso===calSelected ? ' selected' : '');
+      var label = longDate(iso)+(list.length ? ', задач: '+list.length : '');
+      html += '<div class="'+cls+'" data-action="cal-day" data-date="'+iso+'" tabindex="0" role="button" aria-label="'+esc(label)+'">'
+        + '<span class="cal-num">'+d.getDate()+'</span>';
+      list.slice(0,3).forEach(function(it){
+        var tk = it.task;
+        html += '<div class="cal-chip status-'+(STATUS_LABEL[tk.status]?tk.status:'todo')+(isOverdue(tk)?' overdue':'')+'" data-action="edit-task" data-block="'+esc(it.block.id)+'" data-task="'+esc(tk.id)+'" title="'+esc(tk.title+' — '+it.block.title)+'">'+esc(tk.title)+'</div>';
+      });
+      if(list.length>3) html += '<div class="cal-more">ещё '+(list.length-3)+'</div>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+
+    var sel = byDate[calSelected] || [];
+    html += '<div class="cal-panel"><section><div class="agenda-head"><h2>'+longDate(calSelected)+'</h2>'
+      + '<button class="btn" type="button" data-action="add-task-date" data-date="'+calSelected+'">+ Задача на этот день</button></div>'
+      + '<div class="agenda-list">'
+      + (sel.length ? sel.map(function(it){ return agendaItemHtml(it, false); }).join('') : '<div class="agenda-empty">На этот день сроков нет.</div>')
+      + '</div></section></div>';
+
+    document.getElementById('content').innerHTML = html;
   }
 
   function renderTaskBlock(block){
@@ -907,12 +1130,19 @@
     toastTimer = setTimeout(function(){ el.hidden = true; }, 3500);
   }
 
-  function taskModalHtml(blockId, task){
+  function taskModalHtml(blockId, task, dueDefault){
     var isEdit = !!task;
-    task = task || {title:'',owner:'',due:'',priority:'medium',status:'todo',notes:''};
-    return '<form data-form="task" data-block="'+esc(blockId)+'"'+(isEdit?' data-task="'+esc(task.id)+'"':'')+'>'
+    task = task || {title:'',owner:'',due:dueDefault||'',priority:'medium',status:'todo',notes:''};
+    var taskBlocks = state.blocks.filter(function(b){ return b.kind!=='kpi'; });
+    var blockField = blockId
+      ? '<div class="modal-sub">'+esc((findBlock(blockId)||{}).title||'')+'</div>'
+      : '<div class="modal-sub">Срок: '+esc(fmtDate(task.due))+'</div>'
+        + '<div class="field"><label for="f-task-block">Проект</label><select id="f-task-block" name="block" required>'
+        + taskBlocks.map(function(b){ return '<option value="'+esc(b.id)+'">'+esc(b.title)+'</option>'; }).join('')
+        + '</select></div>';
+    return '<form data-form="task"'+(blockId?' data-block="'+esc(blockId)+'"':'')+(isEdit?' data-task="'+esc(task.id)+'"':'')+'>'
       + '<h3>'+(isEdit?'Изменить задачу':'Новая задача')+'</h3>'
-      + '<div class="modal-sub">'+esc((findBlock(blockId)||{}).title||'')+'</div>'
+      + blockField
       + '<div class="field"><label for="f-task-title">Название</label><input type="text" id="f-task-title" name="title" required value="'+esc(task.title)+'"></div>'
       + '<div class="field-row"><div class="field"><label for="f-task-owner">Ответственный</label><input type="text" id="f-task-owner" name="owner" value="'+esc(task.owner)+'"></div>'
       + '<div class="field"><label for="f-task-due">Срок</label><input type="date" id="f-task-due" name="due" value="'+esc(task.due)+'"></div></div>'
@@ -1097,6 +1327,21 @@
       if(fn) fn();
     } else if(action==='download-report'){
       downloadReport();
+    } else if(action==='add-task-date'){
+      if(!state.blocks.some(function(b){ return b.kind!=='kpi'; })){ showToast('Сначала создайте блок-реестр задач.'); return; }
+      openModal(taskModalHtml(null, null, el.getAttribute('data-date')));
+    } else if(action==='cal-shift'){
+      var parts = (calMonth||todayStr().slice(0,7)).split('-');
+      var nd = new Date(Number(parts[0]), Number(parts[1])-1+Number(el.getAttribute('data-shift')), 1);
+      calMonth = nd.getFullYear()+'-'+pad(nd.getMonth()+1);
+      render();
+    } else if(action==='cal-today'){
+      calMonth = todayStr().slice(0,7); calSelected = todayStr();
+      render();
+    } else if(action==='cal-day'){
+      calSelected = el.getAttribute('data-date');
+      if(calSelected.slice(0,7)!==calMonth) calMonth = calSelected.slice(0,7);
+      render();
     } else if(action==='kpi-filter'){
       kpiFilter = el.getAttribute('data-role');
       render();
@@ -1130,7 +1375,7 @@
     var kind = form.getAttribute('data-form');
     var fd = new FormData(form);
     if(kind==='task'){
-      var blockId = form.getAttribute('data-block');
+      var blockId = form.getAttribute('data-block') || fd.get('block');
       var taskId = form.getAttribute('data-task');
       var data = {title:(fd.get('title')||'').trim(), owner:(fd.get('owner')||'').trim(), due: fd.get('due')||'', priority: fd.get('priority'), status: fd.get('status'), notes:(fd.get('notes')||'').trim()};
       if(!data.title) return;
