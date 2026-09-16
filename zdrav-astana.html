@@ -308,14 +308,12 @@
   .agenda-empty{ padding:16px; font-size:13px; color:var(--color-ink-faint); }
   @media (max-width:560px){ .agenda-item{ grid-template-columns:1fr; } }
 
-  /* ---------- Мои задачи и поручения ---------- */
+  /* ---------- Мои задачи ---------- */
   .profile-btn{ margin-top:14px; text-align:left; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:2px; padding:9px 12px; cursor:pointer; color:var(--color-sidebar-ink); display:flex; flex-direction:column; gap:1px; font-size:13px; }
   .profile-btn:hover{ border-color:rgba(255,255,255,0.3); }
   .profile-label{ font-size:11px; color:var(--color-sidebar-muted); }
   .profile-name{ font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .me-tag{ font-weight:600; color:var(--color-accent-ink); }
-  .assignee-side{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-  .btn-small{ padding:5px 10px; font-size:12.5px; }
   .done-details summary{ cursor:pointer; font-family:'PT Serif',serif; font-size:15px; color:var(--color-ink-muted); margin-bottom:10px; }
   .done-details .agenda-item .task-title-text{ color:var(--color-ink-muted); }
 
@@ -574,10 +572,9 @@
     var seen = {}, list = [];
     function add(p){ var n = normName(p); if(n && !seen[n]){ seen[n] = true; list.push(String(p).trim()); } }
     if(profile){ add(profile.name); (profile.aliases||[]).forEach(add); }
-    state.blocks.forEach(function(b){ if(b.kind!=='kpi') b.tasks.forEach(function(tk){ add(tk.owner); add(tk.author); }); });
+    state.blocks.forEach(function(b){ if(b.kind!=='kpi') b.tasks.forEach(function(tk){ add(tk.owner); }); });
     return list.sort(function(a,b){ return a.localeCompare(b,'ru'); });
   }
-  var showDoneAssigned = false;
 
   var currentBlockId = profile ? 'mine' : 'overview';
   var db = null, stateDocRef = null, dbAvailable = false, dbChecked = false, writeChain = Promise.resolve();
@@ -714,19 +711,16 @@
     var html = '';
     html += '<div class="nav-item'+(currentBlockId==='overview'?' active':'')+'" data-action="nav-select" data-block="overview" tabindex="0" role="button">'
       + '<span class="nav-item-label">Обзор</span></div>';
-    var mineOpen = 0, mineOverdue = 0, assignedOpen = 0, assignedOverdue = 0;
+    var mineOpen = 0, mineOverdue = 0;
     allTasks().forEach(function(it){
       var tk = it.task;
-      if(tk.status==='done') return;
-      if(isMe(tk.owner)){ mineOpen++; if(isOverdue(tk)) mineOverdue++; }
-      else if(isMyAssignment(tk)){ assignedOpen++; if(isOverdue(tk)) assignedOverdue++; }
+      if(tk.status==='done' || !isMe(tk.owner)) return;
+      mineOpen++;
+      if(isOverdue(tk)) mineOverdue++;
     });
     html += '<div class="nav-item'+(currentBlockId==='mine'?' active':'')+'" data-action="nav-select" data-block="mine" tabindex="0" role="button">'
       + '<span class="nav-item-label">Мои задачи</span>'
       + (profile ? '<span class="nav-count'+(mineOverdue?' hot':'')+'">'+mineOpen+'</span>' : '') + '</div>';
-    html += '<div class="nav-item'+(currentBlockId==='assigned'?' active':'')+'" data-action="nav-select" data-block="assigned" tabindex="0" role="button">'
-      + '<span class="nav-item-label">Поручения</span>'
-      + (profile ? '<span class="nav-count'+(assignedOverdue?' hot':'')+'">'+assignedOpen+'</span>' : '') + '</div>';
     var td = todayBuckets();
     var hot = td.overdue.length + td.today.filter(function(x){ return x.task.status!=='done'; }).length;
     html += '<div class="nav-item'+(currentBlockId==='today'?' active':'')+'" data-action="nav-select" data-block="today" tabindex="0" role="button">'
@@ -768,7 +762,6 @@
     renderNav();
     if(currentBlockId==='overview'){ renderOverview(); }
     else if(currentBlockId==='mine'){ renderMine(); }
-    else if(currentBlockId==='assigned'){ renderAssigned(); }
     else if(currentBlockId==='today'){ renderToday(); }
     else if(currentBlockId==='calendar'){ renderCalendar(); }
     else {
@@ -900,9 +893,7 @@
     }
     return '<div class="agenda-item'+(overdue?' overdue':'')+(st==='done'?' is-done':'')+'">'
       + '<div style="min-width:0;"><div class="task-title-text" data-action="edit-task" data-block="'+esc(b.id)+'" data-task="'+esc(tk.id)+'" tabindex="0" role="button">'+esc(tk.title)+'</div>'
-      + '<div class="agenda-meta"><span>'+esc(b.title)+'</span><span>'+(isMe(tk.owner) ? '<b class="me-tag">я</b>' : esc(tk.owner||'без ответственного'))+'</span>'
-      + (tk.author && !isMe(tk.author) ? '<span>от: '+esc(tk.author)+'</span>' : '')
-      + '<span class="priority-'+pr+'"><span class="priority-dot"></span>'+PRIORITY_LABEL[pr]+'</span>'
+      + '<div class="agenda-meta"><span>'+esc(b.title)+'</span><span>'+(isMe(tk.owner) ? '<b class="me-tag">я</b>' : esc(tk.owner||'без ответственного'))+'</span>'      + '<span class="priority-'+pr+'"><span class="priority-dot"></span>'+PRIORITY_LABEL[pr]+'</span>'
       + (when ? '<span>'+when+'</span>' : '')
       + (tk.notes ? '<span>'+esc(tk.notes)+'</span>' : '')
       + '</div></div>'
@@ -942,12 +933,7 @@
       + '</div>';
   }
 
-  /* ============ Рендер: Мои задачи и Поручения ============ */
-  /* Поручение — задача другому человеку, которую поставила я (или автор не указан: задачи, заведённые до появления поля «Поручил») */
-  function isMyAssignment(tk){
-    if(!profile || isMe(tk.owner)) return false;
-    return isMe(tk.author) || !tk.author;
-  }
+  /* ============ Рендер: Мои задачи ============ */
   function byOpenDue(a,b){
     var ad = a.task.due || '9999', bd = b.task.due || '9999';
     if(ad!==bd) return ad < bd ? -1 : 1;
@@ -1005,69 +991,6 @@
       + (g.done.length ? '<details class="done-details"><summary>Выполнено: '+g.done.length+'</summary>'
           + '<div class="agenda-list">'+g.done.map(function(it){ return agendaItemHtml(it, true); }).join('')+'</div></details>' : '')
       + '</div>';
-  }
-
-  function renderAssigned(){
-    var topbar = document.getElementById('topbar');
-    var content = document.getElementById('content');
-    if(!profile){
-      topbar.innerHTML = '<div><h1 class="topbar-title">Поручения</h1><div class="topbar-desc">Задачи, которые вы поставили другим.</div></div>';
-      content.innerHTML = profileSetupHtml('Сначала укажите, кто вы', 'Тогда новые поручения будут подписаны вашим именем, а здесь соберутся все задачи, которые вы поставили сотрудникам и службам.');
-      return;
-    }
-    var items = allTasks().filter(function(it){ return isMyAssignment(it.task); });
-    var groups = {}, order = [];
-    var totals = {open:0, overdue:0, done:0, blocked:0};
-    items.forEach(function(it){
-      var key = it.task.owner ? it.task.owner.trim() : 'Без исполнителя';
-      var nk = normName(key);
-      if(!groups[nk]){ groups[nk] = {name:key, items:[], open:0, overdue:0, done:0, blocked:0}; order.push(nk); }
-      var gr = groups[nk], tk = it.task;
-      gr.items.push(it);
-      if(tk.status==='done'){ gr.done++; totals.done++; }
-      else { gr.open++; totals.open++; if(tk.status==='blocked'){ gr.blocked++; totals.blocked++; } if(isOverdue(tk)){ gr.overdue++; totals.overdue++; } }
-    });
-    order.sort(function(a,b){
-      var A = groups[a], B = groups[b];
-      return (B.overdue - A.overdue) || (B.open - A.open) || A.name.localeCompare(B.name,'ru');
-    });
-
-    topbar.innerHTML =
-      '<div><h1 class="topbar-title">Поручения</h1>'
-      + '<div class="topbar-desc">Задачи, которые вы поставили другим. Задачи без поля «Поручил» тоже считаются вашими.</div></div>'
-      + '<div class="topbar-actions"><button class="btn" type="button" data-action="toggle-done">'+(showDoneAssigned?'Скрыть выполненные':'Показать выполненные')+'</button>'
-      + '<button class="btn btn-primary" type="button" data-action="assign-task">+ Поручить задачу</button></div>';
-
-    var html = '<div class="stat-strip">'
-      + '<div class="stat"><div class="stat-value">'+order.length+'</div><div class="stat-label">Исполнителей</div></div>'
-      + '<div class="stat"><div class="stat-value">'+totals.open+'</div><div class="stat-label">В работе у других</div></div>'
-      + '<div class="stat"><div class="stat-value'+(totals.overdue?' warn':'')+'">'+totals.overdue+'</div><div class="stat-label">Просрочено'+(totals.blocked?' · заблокировано: '+totals.blocked:'')+'</div></div>'
-      + '<div class="stat"><div class="stat-value">'+totals.done+'</div><div class="stat-label">Выполнено</div></div>'
-      + '</div>';
-
-    if(!items.length){
-      content.innerHTML = html + '<div class="empty-block">Поручений пока нет.<br><button class="btn btn-primary" type="button" data-action="assign-task">+ Поручить задачу</button></div>';
-      return;
-    }
-
-    html += '<div class="agenda">';
-    order.forEach(function(nk){
-      var gr = groups[nk];
-      var visible = gr.items.filter(function(it){ return showDoneAssigned || it.task.status!=='done'; }).sort(function(a,b){
-        return (a.task.status==='done') - (b.task.status==='done') || byOpenDue(a,b);
-      });
-      if(!visible.length && !showDoneAssigned) return;
-      var pct = gr.items.length ? Math.round(gr.done/gr.items.length*100) : 0;
-      html += '<section class="assignee"><div class="agenda-head'+(gr.overdue?' warn':'')+'"><h2>'+esc(gr.name)+'</h2>'
-        + '<div class="assignee-side"><span class="agenda-count">открыто '+gr.open+(gr.overdue?' · просрочено '+gr.overdue:'')+' · готово '+gr.done+' из '+gr.items.length+' ('+pct+'%)</span>'
-        + (gr.name!=='Без исполнителя' ? '<button class="btn btn-small" type="button" data-action="assign-task" data-owner="'+esc(gr.name)+'">+ Поручить</button>' : '')
-        + '</div></div>'
-        + '<div class="agenda-list">'+visible.map(function(it){ return agendaItemHtml(it, true); }).join('')+'</div></section>';
-    });
-    var hiddenAll = order.every(function(nk){ return groups[nk].open===0; });
-    if(hiddenAll && !showDoneAssigned) html += '<div class="empty-block">Все поручения выполнены. Нажмите «Показать выполненные», чтобы их увидеть.</div>';
-    html += '</div>';
-    content.innerHTML = html;
   }
 
   /* ============ Рендер: Календарь ============ */
@@ -1329,7 +1252,7 @@
     return '<form data-form="profile">'
       + peopleDatalist()
       + '<h3>Кто вы в системе</h3>'
-      + '<div class="modal-sub">По этому имени система найдёт ваши задачи и подпишет ваши поручения. Настройка хранится в этом браузере.</div>'
+      + '<div class="modal-sub">По этому имени система соберёт ваши задачи из всех проектов. Настройка хранится в этом браузере.</div>'
       + '<div class="field"><label for="f-profile-name">Имя или должность, как в поле «Ответственный»</label><input type="text" id="f-profile-name" name="name" list="people-list" autocomplete="off" required value="'+esc(p.name)+'" placeholder="Например, Руководитель проекта"></div>'
       + '<div class="field"><label for="f-profile-aliases">Другие варианты, через запятую</label><input type="text" id="f-profile-aliases" name="aliases" value="'+esc((p.aliases||[]).join(', '))+'" placeholder="Например, Сатаева М., Руководитель проекта"></div>'
       + '<div class="modal-actions"><span></span><div class="modal-actions-right">'
@@ -1341,34 +1264,31 @@
   function taskModalHtml(blockId, task, dueDefault, opts){
     opts = opts || {};
     var isEdit = !!task;
-    var assign = opts.mode==='assign';
-    task = task || {title:'',owner:opts.ownerDefault||'',author:myName(),due:dueDefault||'',priority:'medium',status:'todo',notes:''};
+    task = task || {title:'',owner:opts.ownerDefault||'',due:dueDefault||'',priority:'medium',status:'todo',notes:''};
     var taskBlocks = state.blocks.filter(function(b){ return b.kind!=='kpi'; });
     var blockField = blockId
       ? '<div class="modal-sub">'+esc((findBlock(blockId)||{}).title||'')+'</div>'
-      : '<div class="modal-sub">'+(assign ? 'Задача появится в разделе «Мои задачи» у исполнителя, когда он откроет систему под своим именем.' : (task.due ? 'Срок: '+esc(fmtDate(task.due)) : 'Выберите проект, к которому относится задача.'))+'</div>'
+      : '<div class="modal-sub">'+(task.due ? 'Срок: '+esc(fmtDate(task.due)) : 'Выберите проект, к которому относится задача.')+'</div>'
         + '<div class="field"><label for="f-task-block">Проект</label><select id="f-task-block" name="block" required>'
         + taskBlocks.map(function(b){ return '<option value="'+esc(b.id)+'">'+esc(b.title)+'</option>'; }).join('')
         + '</select></div>';
-    var heading = isEdit ? 'Изменить задачу' : (assign ? 'Поручить задачу' : 'Новая задача');
     return '<form data-form="task"'+(blockId?' data-block="'+esc(blockId)+'"':'')+(isEdit?' data-task="'+esc(task.id)+'"':'')+'>'
       + peopleDatalist()
-      + '<h3>'+heading+'</h3>'
+      + '<h3>'+(isEdit ? 'Изменить задачу' : 'Новая задача')+'</h3>'
       + blockField
-      + '<div class="field"><label for="f-task-title">'+(assign?'Что нужно сделать':'Название')+'</label><input type="text" id="f-task-title" name="title" required value="'+esc(task.title)+'" placeholder="'+(assign?'Например, Подготовить график дежурств на октябрь':'')+'"></div>'
-      + '<div class="field-row"><div class="field"><label for="f-task-owner">'+(assign?'Исполнитель':'Ответственный')+'</label><input type="text" id="f-task-owner" name="owner" list="people-list" autocomplete="off"'+(assign?' required':'')+' value="'+esc(task.owner)+'"></div>'
-      + '<div class="field"><label for="f-task-author">Поручил</label><input type="text" id="f-task-author" name="author" list="people-list" autocomplete="off" value="'+esc(task.author||'')+'"></div></div>'
-      + '<div class="field-row"><div class="field"><label for="f-task-due">Срок</label><input type="date" id="f-task-due" name="due"'+(assign?' required':'')+' value="'+esc(task.due)+'"></div>'
-      + '<div class="field"><label for="f-task-priority">Приоритет</label><select id="f-task-priority" name="priority">'
+      + '<div class="field"><label for="f-task-title">Название</label><input type="text" id="f-task-title" name="title" required value="'+esc(task.title)+'"></div>'
+      + '<div class="field-row"><div class="field"><label for="f-task-owner">Ответственный</label><input type="text" id="f-task-owner" name="owner" list="people-list" autocomplete="off" value="'+esc(task.owner)+'"></div>'
+      + '<div class="field"><label for="f-task-due">Срок</label><input type="date" id="f-task-due" name="due" value="'+esc(task.due)+'"></div></div>'
+      + '<div class="field-row"><div class="field"><label for="f-task-priority">Приоритет</label><select id="f-task-priority" name="priority">'
       +   Object.keys(PRIORITY_LABEL).map(function(p){ return '<option value="'+p+'"'+(p===task.priority?' selected':'')+'>'+PRIORITY_LABEL[p]+'</option>'; }).join('')
-      + '</select></div></div><div class="field-row">'
+      + '</select></div>'
       + '<div class="field"><label for="f-task-status">Статус</label><select id="f-task-status" name="status">'
       +   Object.keys(STATUS_LABEL).map(function(s){ return '<option value="'+s+'"'+(s===task.status?' selected':'')+'>'+STATUS_LABEL[s]+'</option>'; }).join('')
       + '</select></div></div>'
-      + '<div class="field"><label for="f-task-notes">'+(assign?'Ожидаемый результат и детали':'Примечание')+'</label><textarea id="f-task-notes" name="notes" rows="2">'+esc(task.notes)+'</textarea></div>'
+      + '<div class="field"><label for="f-task-notes">Примечание</label><textarea id="f-task-notes" name="notes" rows="2">'+esc(task.notes)+'</textarea></div>'
       + '<div class="modal-actions">'
       + (isEdit ? '<button type="button" class="btn btn-ghost" data-action="delete-task" data-block="'+esc(blockId)+'" data-task="'+esc(task.id)+'">Удалить</button>' : '<span></span>')
-      + '<div class="modal-actions-right"><button type="button" class="btn" data-action="close-modal">Отмена</button><button type="submit" class="btn btn-primary">'+(assign && !isEdit ? 'Поручить' : 'Сохранить')+'</button></div>'
+      + '<div class="modal-actions-right"><button type="button" class="btn" data-action="close-modal">Отмена</button><button type="submit" class="btn btn-primary">Сохранить</button></div>'
       + '</div></form>';
   }
 
@@ -1545,12 +1465,6 @@
     } else if(action==='add-mine'){
       if(!state.blocks.some(function(b){ return b.kind!=='kpi'; })){ showToast('Сначала создайте блок-реестр задач.'); return; }
       openModal(taskModalHtml(null, null, '', {ownerDefault: myName()}));
-    } else if(action==='assign-task'){
-      if(!state.blocks.some(function(b){ return b.kind!=='kpi'; })){ showToast('Сначала создайте блок-реестр задач.'); return; }
-      openModal(taskModalHtml(null, null, '', {mode:'assign', ownerDefault: el.getAttribute('data-owner')||''}));
-    } else if(action==='toggle-done'){
-      showDoneAssigned = !showDoneAssigned;
-      render();
     } else if(action==='add-task-date'){
       if(!state.blocks.some(function(b){ return b.kind!=='kpi'; })){ showToast('Сначала создайте блок-реестр задач.'); return; }
       openModal(taskModalHtml(null, null, el.getAttribute('data-date')));
@@ -1601,7 +1515,7 @@
     if(kind==='task'){
       var blockId = form.getAttribute('data-block') || fd.get('block');
       var taskId = form.getAttribute('data-task');
-      var data = {title:(fd.get('title')||'').trim(), owner:(fd.get('owner')||'').trim(), author:(fd.get('author')||'').trim(), due: fd.get('due')||'', priority: fd.get('priority'), status: fd.get('status'), notes:(fd.get('notes')||'').trim()};
+      var data = {title:(fd.get('title')||'').trim(), owner:(fd.get('owner')||'').trim(), due: fd.get('due')||'', priority: fd.get('priority'), status: fd.get('status'), notes:(fd.get('notes')||'').trim()};
       if(!data.title) return;
       closeModal();
       if(taskId){ updateTask(blockId, taskId, data); showToast('Задача сохранена'); } else { addTask(blockId, data); showToast('Задача добавлена'); }
