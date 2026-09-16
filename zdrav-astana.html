@@ -308,6 +308,18 @@
   .agenda-empty{ padding:16px; font-size:13px; color:var(--color-ink-faint); }
   @media (max-width:560px){ .agenda-item{ grid-template-columns:1fr; } }
 
+  /* ---------- Рабочие группы ---------- */
+  .wg-table td{ vertical-align:middle; }
+  .wg-name{ min-width:200px; }
+  .wg-num{ width:64px; padding:5px 6px; font-size:13px; font-variant-numeric:tabular-nums; }
+  .wg-chip{ font:inherit; font-size:12px; padding:3px 9px; border-radius:2px; border:1px dashed var(--color-line); background:none; color:var(--color-ink-faint); cursor:pointer; white-space:nowrap; }
+  .wg-chip.wg-progress{ border:1px solid transparent; background:var(--status-progress-soft); color:var(--status-progress); }
+  .wg-chip.wg-done{ border:1px solid transparent; background:var(--status-done-soft); color:var(--status-done); }
+  .wg-note{ font-size:12.5px; color:var(--color-ink-muted); max-width:90ch; margin:14px 0 0; }
+  .wg-toolbar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; font-size:13px; color:var(--color-ink-muted); }
+  .wg-toolbar select{ max-width:100%; }
+  .wg-pts{ font-weight:600; }
+
   /* ---------- Мои задачи ---------- */
   .profile-btn{ margin-top:14px; text-align:left; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:2px; padding:9px 12px; cursor:pointer; color:var(--color-sidebar-ink); display:flex; flex-direction:column; gap:1px; font-size:13px; }
   .profile-btn:hover{ border-color:rgba(255,255,255,0.3); }
@@ -443,10 +455,184 @@
     ];
   }
 
+  /* ============ Экспертные рабочие группы (Положение о KPI, ред. 1.0) ============
+     Фамилии, суммы премий и данные пациентов в систему намеренно не переносятся. */
+  var WG_VERSION = 1;
+  var WG_CAT_SECTIONS = [
+    ['Клинические протоколы и рекомендации', [
+      ['protocol','Клинический протокол, размещён на сайте ННЦРЗ',40],
+      ['roo_rec','Клинические рекомендации РОО «КОВГ», размещены на сайте РОО',25]]],
+    ['Публикации', [
+      ['q12','Статья в зарубежном журнале Q1–Q2',30],
+      ['q34','Статья в зарубежном журнале Q3–Q4',20],
+      ['letter_int','Клинический случай / letter в зарубежном журнале',10],
+      ['orig_kz','Оригинальная статья в отечественном журнале',8],
+      ['review_kz','Обзор в отечественном журнале',6],
+      ['case_kz','Клинический случай в отечественном журнале',4],
+      ['abstract_int','Тезисы зарубежной конференции (приняты)',3]]],
+    ['Конференции и доклады', [
+      ['oral_int','Устный доклад на зарубежной конференции',12],
+      ['poster_int','Постер на зарубежной конференции',6],
+      ['hemforum','Доклад на HemForum (неспонсируемый)',8],
+      ['ext_talk','Доклад на внешней площадке РК/СНГ (неспонсируемый)',6],
+      ['moderation','Модераторство сессии',3],
+      ['internal_talk','Внутренний доклад для врачей Центра',3],
+      ['cycle_meeting','Цикловое совещание',0]]],
+    ['Образовательная работа', [
+      ['edu_residents_roo','Мероприятие для резидентов других организаций (по линии РОО)',10],
+      ['edu_young','Мероприятие для молодых гематологов',8],
+      ['edu_pmsp','Мероприятие для врачей ПМСП',8],
+      ['edu_residents','Мероприятие для резидентов Центра',6],
+      ['edu_related','Мероприятие для врачей смежных специальностей',6],
+      ['patient_school','Школа пациентов / пациентские материалы (неспонсируемые)',4],
+      ['journal_club','Журнальный клуб (ведущая группа)',2]]],
+    ['Регистр, аналитика и внедрения', [
+      ['registry_launch','Запущенный регистр (внесены первые пациенты)',25],
+      ['registry_tz','Утверждённое ТЗ регистра',15],
+      ['implementation','Внедрение в практику (протокол ХТ, шкала риска, лабораторный метод)',15],
+      ['analytic_report','Аналитический отчёт с принятым клиническим решением',12],
+      ['org_doc','Организационно-методический документ (регламент, алгоритм маршрутизации)',6],
+      ['intercenter','Межцентровое сотрудничество (запущенный регулярный формат)',5],
+      ['site','Информационная площадка группы (сайт, раздел)',5]]],
+    ['Совместная работа с РОО «КОВГ»', [
+      ['roo_conf','Совместная конференция/форум как соорганизатор',18],
+      ['roo_doc','Совместный документ РОО (резолюция, письмо, метод. материалы)',10],
+      ['roo_seminar','Совместный образовательный семинар под эгидой РОО',8]]],
+    ['Междисциплинарные разборы', [
+      ['tb_lab','Tumor board с лабораторией (морфология, ИФТ, цитогенетика, молекулярная диагностика)',5],
+      ['tb_related','Tumor board со смежными специалистами (нейрохирург, нефролог и др.)',5]]]
+  ];
+  var WG_CATS = {};
+  WG_CAT_SECTIONS.forEach(function(s){ s[1].forEach(function(c){ WG_CATS[c[0]] = {label:c[1], points:c[2], section:s[0]}; }); });
+  var WG_CAP_JOURNAL = 6, WG_CAP_TUMOR = 15;
+  var WG_PRODUCTS = [
+    ['algorithm','Алгоритм обсуждения'],
+    ['criteria','Критерии направления'],
+    ['registry','Регистр'],
+    ['docs','Документирование']
+  ];
+
+  function buildWgBlock(){
+    function g(id,name,doctors,norm,jul,aug,products){
+      return {id:id, name:name, doctors:doctors, norm:norm, reviews:{'2026-07':jul,'2026-08':aug,'2026-09':''}, products:products||{}};
+    }
+    function a(group,cat,date,title,opts){
+      opts = opts||{};
+      return {id:uid('a'), group:group, cat:cat, date:date, title:title,
+        sponsor: opts.sponsor||'нет', endpoint: opts.endpoint!==false, proof: opts.proof||''};
+    }
+    var HF = {proof:'программа HemForum 2026'};
+    return {
+      id:'b-wg', kind:'wg',
+      title:'Рабочие группы · KPI',
+      description:'Экспертные рабочие группы Центра гематологии: разборы пациентов, реестр активностей и рейтинг групп по Положению о KPI (ред. 1.0).',
+      period:'III квартал 2026 — калибровочный (данные за июль–август)',
+      months:['2026-07','2026-08','2026-09'],
+      groups:[
+        g('ol','Острые лейкозы',4,8,3,2),
+        g('lpz','Лимфопролиферативные заболевания',9,8,12,13,{registry:'progress'}),
+        g('pkz','Плазмоклеточные заболевания',8,8,9,5),
+        g('mpz','Миелопролиферативные заболевания (ХМЛ/МПН)',5,8,8,8,{algorithm:'done', criteria:'done', registry:'progress'}),
+        g('dk','Депрессии кроветворения',5,8,2,0),
+        g('dg','Доброкачественная гематология',6,8,6,3),
+        g('koag','Коагулопатии',5,8,4,2),
+        g('io','Инфекционные осложнения и сопроводительная терапия',4,4,0,0,{registry:'done'})
+      ],
+      activities:[
+        a('ol','letter_int','','Статья: даратумумаб при ОЛЛ (принята к публикации)',{endpoint:false, proof:'ожидается DOI'}),
+        a('ol','hemforum','2026-08-29','Современная терапия рецидивов ОПЛ',HF),
+        a('ol','hemforum','2026-08-29','Острый миелоидный лейкоз с TP53',HF),
+        a('ol','hemforum','2026-08-29','Клинические рекомендации рабочей группы по ОЛ: ОМЛ',HF),
+        a('ol','site','','Сайт рабочей группы по острым лейкозам',{proof:'ссылка на сайт'}),
+
+        a('lpz','hemforum','2026-08-29','Классическая лимфома Ходжкина: эволюция первой линии терапии',HF),
+        a('lpz','hemforum','2026-08-29','Первая линия терапии МКЛ: данные TRIANGLE',HF),
+        a('lpz','hemforum','2026-08-29','Клинические рекомендации РОО по индолентным лимфомам',HF),
+        a('lpz','hemforum','2026-08-30','Лимфомы ЦНС: что предложить пациентам сегодня',HF),
+        a('lpz','hemforum','2026-08-30','Клинические рекомендации РОО по ДВККЛ',HF),
+        a('lpz','roo_seminar','2026-07-22','HemaConnect: семинар по МКЛ',{sponsor:'уточнить', proof:'программа семинара'}),
+        a('lpz','edu_pmsp','2026-06-15','ХЛЛ: навигатор современной практики ПМСП (поликлиника CITY)',{proof:'программа лекции'}),
+        a('lpz','registry_tz','','Регистр ЛПЗ: драфт ТЗ передан программистам',{endpoint:false, proof:'ожидается утверждённое ТЗ'}),
+
+        a('pkz','hemforum','2026-08-29','MGUS и тлеющая ММ: тренды рекомендаций',HF),
+        a('pkz','hemforum','2026-08-29','Разбор случая: MGUS vs MM у пожилого пациента',HF),
+        a('pkz','hemforum','2026-08-30','Case discussion: aggressive MM in a resource-limited setting (англ.)',HF),
+        a('pkz','patient_school','2026-08-24','Школа пациентов «Множественная миелома»: доклад',{sponsor:'уточнить', proof:'программа школы'}),
+        a('pkz','patient_school','2026-08-24','Памятка для пациентов с ММ',{sponsor:'уточнить', proof:'макет памятки'}),
+        a('pkz','patient_school','2026-07-21','Три информационно-образовательных подкаста для пациентов (сайт РОО)',{proof:'ссылки на сайте РОО'}),
+        a('pkz','edu_young','2026-08-22','Мастер-класс по CAR-T',{proof:'программа мастер-класса'}),
+        a('pkz','cycle_meeting','2026-08-17','Новые ориентиры в терапии впервые диагностированной ММ (Актау)',{sponsor:'уточнить', proof:'программа совещания'}),
+        a('pkz','tb_related','2026-08-10','Tumor board: MGUS + ТМА / аГУС (нефролог, реаниматолог, клинический фармаколог)',{proof:'протокол обсуждения'}),
+        a('pkz','tb_related','2026-07-14','Tumor board: плазмоцитома турецкого седла (нейрохирург, радиоонколог)',{proof:'протокол обсуждения'}),
+
+        a('mpz','hemforum','2026-08-29','Клинические рекомендации РОО «КОВГ» по МПН',HF),
+        a('mpz','hemforum','2026-08-30','Ремиссия после отмены ИТК при ХМЛ: казахстанский опыт, GeneXpert',HF),
+        a('mpz','hemforum','2026-08-31','Клинический случай: внелёгочный туберкулёз на руксолитинибе при МПН',HF),
+        a('mpz','journal_club','2026-08-19','Оптимизация дозы ИТК при ХМЛ: когда меньше — лучше',{proof:'протокол заседания'}),
+        a('mpz','org_doc','2026-08','Регламент обсуждения клинических случаев ХМЛ/МПН',{proof:'утверждённый документ'}),
+        a('mpz','org_doc','2026-08','Алгоритм маршрутизации клинических случаев ХМЛ/МПН',{proof:'утверждённый документ'}),
+
+        a('dk','abstract_int','2026-09-17','Гапло-алло-ТГСК при гипопластическом новообразовании с минорным ПНГ-клоном (симпозиум им. Р.М. Горбачевой, СПб)',{proof:'уведомление о принятии'}),
+        a('dk','hemforum','2026-08-30','Клинические рекомендации РОО «КОВГ» по МДС',HF),
+        a('dk','moderation','2026-08-30','Модераторство сессии HemForum 2026',HF),
+
+        a('dg','internal_talk','2026-08-20','Нормохромная анемия неясного генеза (разбор для врачей Центра)',{proof:'протокол заседания'}),
+        a('dg','roo_rec','','Протокол по АИГА (завершающая стадия)',{endpoint:false, proof:'ожидается размещение'}),
+
+        a('koag','internal_talk','2026-07-15','Гипофибриногенемия (для врачей всех подразделений Центра)',{proof:'объявление, протокол'}),
+        a('koag','hemforum','2026-08-30','Клинический случай: синдром Бернара–Сулье',HF),
+
+        a('io','hemforum','2026-08-30','Инфекционный контроль и алгоритм при фебрильной нейтропении',HF),
+        a('io','registry_tz','2026-08','ТЗ по микробиологическому мониторингу в МИС (36 полей, 17 обязательных)',{proof:'утверждённое ТЗ'}),
+        a('io','analytic_report','2026-07','Анализ структуры возбудителей, AST и тенденций антибиотикорезистентности (2023–2026)',{proof:'отчёт + решение'}),
+        a('io','analytic_report','2026-07','Анализ потребления АМП: DDD и классификация AWaRe',{proof:'отчёт + решение'}),
+        a('io','org_doc','2026-08','Унифицированные справочники для МИС (локализации, микроорганизмы, AST, маркеры резистентности)',{proof:'утверждённые справочники'})
+      ]
+    };
+  }
+
+  function buildWgTasksBlock(){
+    var P1 = 'Протокол 08.06.2026. ', P2 = 'Протокол 23.06.2026. ', NEXT = 'План следующего этапа (итоги пилота). ';
+    var CHECK = 'Выполнение не подтверждено документами — отметьте статус.';
+    return {
+      id:'b-wg-tasks', kind:'tasks',
+      title:'Рабочие группы: поручения',
+      description:'Поручения из протоколов совещаний 08.06.2026 и 23.06.2026, сроки по Положению о KPI и план следующего этапа.',
+      tasks:[
+        t('Провести субботние онлайн-семинары по ИИ: для врачей и для управленцев','Организаторы проекта','2026-06-13','medium','progress',P1+CHECK),
+        t('Разослать участникам ТЗ по ПНГ как образец для ТЗ регистров','Руководитель проекта','2026-06-12','medium','progress',P1+CHECK),
+        t('Каждому врачу выбрать одну приоритетную рабочую группу','Врачи Центра','2026-06-23','medium','done',P1+'По протоколу 23.06 большинство врачей прошли опрос, группы сформированы.'),
+        t('Сформировать ТЗ регистра по своей нозологии (по образцу ПНГ)','Руководители рабочих групп','2026-08-28','high','progress',P1+'Утверждено: ТЗ по микробиологическому мониторингу (ИО). В работе: ЛПЗ, ХМЛ/МПН.'),
+        t('Организовать выезд 1–2 специалистов в Алматы (гемостаз, лимфомы)','Координатор проекта','2026-07-31','low','progress',P1+CHECK),
+        t('Провести внутреннюю конференцию врачей Центра до HemForum','Руководство Центра','2026-08-28','medium','progress',P1+CHECK),
+        t('Настроить инструмент мониторинга проектной деятельности','Руководитель проекта','2026-06-13','medium','done',P1+'Эта система.'),
+        t('Разработать критерии эффективности рабочих групп и систему поощрения','Руководитель проекта','','high','done',P1+'Положение о KPI экспертных рабочих групп, ред. 1.0.'),
+        t('Каждой группе создать рабочий чат и включить медицинского директора','Руководители рабочих групп','2026-06-30','medium','progress',P2+CHECK),
+        t('Провести первое организационное заседание каждой группы','Руководители рабочих групп','2026-07-07','high','progress',P2+CHECK),
+        t('Подготовить алгоритм обсуждения пациентов','Руководители рабочих групп','2026-07-23','high','progress',P2+'Готово: ХМЛ/МПН (регламент). По группам — в блоке «Рабочие группы · KPI».'),
+        t('Подготовить критерии направления на экспертное обсуждение, консилиум и tumor board','Руководители рабочих групп','2026-07-23','high','progress',P2+'Готово: ХМЛ/МПН (алгоритм маршрутизации).'),
+        t('Подготовить предложения по регистру пациентов','Руководители рабочих групп','2026-07-23','high','progress',P2+'Готово: ИО (ТЗ утверждено). В работе: ЛПЗ, ХМЛ/МПН.'),
+        t('Разработать порядок документирования обсуждений и отчётности','Руководители рабочих групп','2026-07-23','medium','progress',P2+CHECK),
+        t('Закрыть статус спонсорства в строках «уточнить» реестра активностей','Руководитель проекта','2026-09-30','high','todo','HemaConnect (ЛПЗ); школа пациентов, памятка и совещание в Актау (ПКЗ).'),
+        t('Утвердить списочный состав групп на начало IV квартала','Руководители рабочих групп','2026-10-01','medium','todo','Положение п. 5.4 и 7.4. Число врачей в калькуляторе указано ориентировочно.'),
+        t('Собрать реестры активностей за III квартал','Руководители рабочих групп','2026-10-10','high','todo','Положение п. 7.1: не позднее 10-го числа месяца после квартала.'),
+        t('Оценить все 8 групп и уровень их организационной зрелости','Руководитель проекта','2026-10-15','high','todo',NEXT),
+        t('Определить показатели и ожидаемые результаты каждой группы на следующий период','Руководитель проекта','2026-10-15','high','todo',NEXT),
+        t('Унифицировать формат клинических обсуждений, протоколирования и отчётности','Руководитель проекта','2026-10-31','medium','todo',NEXT),
+        t('Завершить требования к нозологическим регистрам и минимальному набору данных','Руководители рабочих групп','2026-10-31','medium','todo',NEXT),
+        t('Пересмотреть веса KPI по итогам первого квартала','Руководство Центра','2026-10-31','medium','todo','Положение п. 8.1.'),
+        t('Завершить и разместить протокол по АИГА','Руководитель группы доброкачественной гематологии','','medium','progress','Баллы засчитываются после размещения (конечная точка).')
+      ]
+    };
+  }
+
   function defaultState(){
     return {
       kpiVersion: KPI_VERSION,
+      wgVersion: WG_VERSION,
       blocks: [
+        buildWgTasksBlock(),
+        buildWgBlock(),
         {
           id:'b-dispanser', kind:'tasks',
           title:'Диспансеризация в Астане',
@@ -497,12 +683,26 @@
     if(!Array.isArray(state.blocks)){ state.blocks = []; changed = true; }
     state.blocks.forEach(function(b){
       if(b.kind==='kpi'){ if(!Array.isArray(b.kpis)){ b.kpis=[]; changed=true; } }
+      else if(b.kind==='wg'){
+        if(!Array.isArray(b.groups)){ b.groups=[]; changed=true; }
+        if(!Array.isArray(b.activities)){ b.activities=[]; changed=true; }
+        if(!Array.isArray(b.months)){ b.months=[]; changed=true; }
+      }
       else { if(b.kind!=='tasks'){ b.kind='tasks'; changed=true; } if(!Array.isArray(b.tasks)){ b.tasks=[]; changed=true; } }
     });
     return changed;
   }
   function migrateKpis(){
     var changed = normalizeState();
+    if((Number(state.wgVersion)||0) < WG_VERSION){
+      /* Добавляем проект рабочих групп в начало, ничего не удаляя из сохранённых данных */
+      var add = [];
+      if(!state.blocks.some(function(b){ return b.id==='b-wg-tasks'; })) add.push(buildWgTasksBlock());
+      if(!state.blocks.some(function(b){ return b.id==='b-wg'; })) add.push(buildWgBlock());
+      state.blocks = add.concat(state.blocks);
+      state.wgVersion = WG_VERSION;
+      changed = true;
+    }
     var version = Number(state.kpiVersion)||1;
     if(version >= KPI_VERSION) return changed;
     var block = state.blocks.find(function(b){ return b.id==='b-kpi'; });
@@ -572,7 +772,7 @@
     var seen = {}, list = [];
     function add(p){ var n = normName(p); if(n && !seen[n]){ seen[n] = true; list.push(String(p).trim()); } }
     if(profile){ add(profile.name); (profile.aliases||[]).forEach(add); }
-    state.blocks.forEach(function(b){ if(b.kind!=='kpi') b.tasks.forEach(function(tk){ add(tk.owner); }); });
+    state.blocks.forEach(function(b){ if(b.kind==='tasks') b.tasks.forEach(function(tk){ add(tk.owner); }); });
     return list.sort(function(a,b){ return a.localeCompare(b,'ru'); });
   }
 
@@ -668,6 +868,10 @@
     return {label: achieved?'Достигнуто':'В процессе', cls: achieved?'done':'progress', pct:pct, achieved:achieved};
   }
   function blockStats(block){
+    if(block.kind==='wg'){
+      var r = wgRating(block), rv = wgReviewsTotals(block);
+      return {total:block.activities.length, points:r.totalCredited, groups:block.groups.length, pct:rv.pctToDate, reviews:rv};
+    }
     if(block.kind==='kpi'){
       var total = block.kpis.length, achieved = 0;
       block.kpis.forEach(function(kp){ if(kpiStatus(kp).achieved) achieved++; });
@@ -680,7 +884,7 @@
   function aggregate(){
     var total=0, done=0, progress=0, overdue=0, blocked=0;
     state.blocks.forEach(function(b){
-      if(b.kind==='kpi') return;
+      if(b.kind!=='tasks') return;
       b.tasks.forEach(function(tk){
         total++;
         if(tk.status==='done') done++;
@@ -694,7 +898,7 @@
   function upcomingDeadlines(limit){
     var items = [];
     state.blocks.forEach(function(b){
-      if(b.kind==='kpi') return;
+      if(b.kind!=='tasks') return;
       b.tasks.forEach(function(tk){
         if(tk.status==='done' || !tk.due) return;
         items.push({task:tk, block:b});
@@ -731,7 +935,7 @@
     html += '<div class="nav-sep" aria-hidden="true"></div>';
     state.blocks.forEach(function(b){
       var stats = blockStats(b);
-      var count = b.kind==='kpi' ? (stats.achieved+'/'+stats.total) : (stats.done+'/'+stats.total);
+      var count = b.kind==='wg' ? (fmtPts(stats.points)+' б.') : b.kind==='kpi' ? (stats.achieved+'/'+stats.total) : (stats.done+'/'+stats.total);
       html += '<div class="nav-item'+(currentBlockId===b.id?' active':'')+'" data-action="nav-select" data-block="'+esc(b.id)+'" tabindex="0" role="button">'
         + '<span class="nav-item-label">'+esc(b.title)+'</span>'
         + '<span class="nav-count">'+count+'</span>'
@@ -767,7 +971,9 @@
     else {
       var block = state.blocks.find(function(b){ return b.id===currentBlockId; });
       if(!block){ currentBlockId='overview'; renderOverview(); return; }
-      if(block.kind==='kpi'){ renderKpiBlock(block); } else { renderTaskBlock(block); }
+      if(block.kind==='wg'){ renderWgBlock(block); }
+      else if(block.kind==='kpi'){ renderKpiBlock(block); }
+      else { renderTaskBlock(block); }
     }
   }
 
@@ -797,7 +1003,10 @@
       state.blocks.forEach(function(b){
         var stats = blockStats(b);
         var meta, fillCls = '';
-        if(b.kind==='kpi'){
+        if(b.kind==='wg'){
+          meta = stats.groups+' групп · '+fmtPts(stats.points)+' баллов · разборы '+stats.pct+'% нормы';
+          if(stats.pct < 50) fillCls = ' mid';
+        } else if(b.kind==='kpi'){
           meta = stats.achieved+' из '+stats.total+' KPI достигнуто';
         } else {
           meta = stats.done+' из '+stats.total+' · '+stats.pct+'%'
@@ -849,7 +1058,7 @@
   function allTasks(){
     var items = [];
     state.blocks.forEach(function(b){
-      if(b.kind==='kpi') return;
+      if(b.kind!=='tasks') return;
       b.tasks.forEach(function(tk){ items.push({task:tk, block:b}); });
     });
     return items;
@@ -1061,6 +1270,232 @@
     document.getElementById('content').innerHTML = html;
   }
 
+  /* ============ Рабочие группы: расчёты по Положению ============ */
+  function fmtPts(n){ var r = Math.round(n*100)/100; return String(r).replace('.', ','); }
+  function wgPoints(act){
+    var cat = WG_CATS[act.cat];
+    if(!cat) return 0;
+    if(act.sponsor==='да' || !act.endpoint) return 0;
+    return cat.points;
+  }
+  function wgGroupName(block, id){ var g = block.groups.find(function(x){ return x.id===id; }); return g ? g.name : '—'; }
+  function wgRating(block){
+    var rows = block.groups.map(function(g){
+      var raw = 0, jc = 0, tb = 0, count = 0, pending = 0, unclear = 0;
+      block.activities.forEach(function(a){
+        if(a.group!==g.id) return;
+        count++;
+        var p = wgPoints(a);
+        raw += p;
+        if(a.cat==='journal_club') jc += p;
+        if(a.cat==='tb_lab' || a.cat==='tb_related') tb += p;
+        if(!a.endpoint) pending++;
+        if(a.sponsor==='уточнить') unclear++;
+      });
+      var excess = Math.max(0, jc-WG_CAP_JOURNAL) + Math.max(0, tb-WG_CAP_TUMOR);
+      var credited = raw - excess;
+      var doctors = Number(g.doctors)||0;
+      return {group:g, raw:raw, excess:excess, credited:credited, doctors:doctors, perDoctor: doctors ? credited/doctors : 0, count:count, pending:pending, unclear:unclear};
+    });
+    var sumPer = 0, sumCred = 0;
+    rows.forEach(function(r){ sumPer += r.perDoctor; sumCred += r.credited; });
+    rows.forEach(function(r){
+      r.sharePer = sumPer ? r.perDoctor/sumPer : 0;
+      r.shareSum = sumCred ? r.credited/sumCred : 0;
+      r.index = 0.7*r.sharePer + 0.3*r.shareSum;
+    });
+    return {rows:rows, totalCredited:sumCred};
+  }
+  function wgReviewCount(g){
+    var s = 0;
+    Object.keys(g.reviews||{}).forEach(function(m){ s += Number(g.reviews[m])||0; });
+    return s;
+  }
+  function wgFilledMonths(block){
+    return block.months.filter(function(m){
+      return block.groups.some(function(g){ var v = (g.reviews||{})[m]; return v!=='' && v!=null; });
+    });
+  }
+  function wgReviewsTotals(block){
+    var filled = wgFilledMonths(block).length;
+    var done = 0, normQ = 0, normToDate = 0;
+    block.groups.forEach(function(g){
+      done += wgReviewCount(g);
+      normQ += (Number(g.norm)||0) * block.months.length;
+      normToDate += (Number(g.norm)||0) * filled;
+    });
+    return {done:done, normQuarter:normQ, filled:filled, pctToDate: normToDate ? Math.round(done/normToDate*100) : 0, pctQuarter: normQ ? Math.round(done/normQ*100) : 0};
+  }
+  function wgMonthLabel(m){ var p = m.split('-'); return MONTHS[Number(p[1])-1]; }
+  function wgDateLabel(d){
+    if(!d) return '—';
+    if(/^\d{4}-\d{2}-\d{2}$/.test(d)) return fmtDate(d);
+    if(/^\d{4}-\d{2}$/.test(d)) return MONTHS[Number(d.slice(5,7))-1].toLowerCase()+' '+d.slice(0,4);
+    return esc(d);
+  }
+  var PRODUCT_LABEL = {'':'не отмечено', progress:'в работе', done:'готово'};
+
+  var wgTab = 'groups';
+  var wgFilter = 'all';
+
+  function renderWgBlock(block){
+    var rating = wgRating(block);
+    var rv = wgReviewsTotals(block);
+    var unclear = block.activities.filter(function(a){ return a.sponsor==='уточнить'; }).length;
+    var topbar = document.getElementById('topbar');
+    topbar.innerHTML =
+      '<div><h1 class="topbar-title">'+esc(block.title)+'</h1>'
+      + '<div class="topbar-desc">'+esc(block.description||'')+'</div>'
+      + (block.period ? '<div class="today-date" style="font-size:13.5px;">'+esc(block.period)+'</div>' : '')
+      + '</div>'
+      + '<div class="topbar-actions"><button class="btn btn-primary" type="button" data-action="wg-add" data-block="'+esc(block.id)+'">+ Активность</button></div>';
+
+    var html = '<div class="stat-strip">'
+      + '<div class="stat"><div class="stat-value">'+block.groups.length+'</div><div class="stat-label">Рабочих групп</div></div>'
+      + '<div class="stat"><div class="stat-value">'+fmtPts(rating.totalCredited)+'</div><div class="stat-label">Баллов зачтено · активностей: '+block.activities.length+'</div></div>'
+      + '<div class="stat"><div class="stat-value">'+rv.done+'</div><div class="stat-label">Пациентов разобрано · '+rv.pctToDate+'% нормы за '+rv.filled+' '+plural(rv.filled,'месяц','месяца','месяцев')+'</div></div>'
+      + '<div class="stat"><div class="stat-value'+(unclear?' warn':'')+'">'+unclear+'</div><div class="stat-label">Спонсорство «уточнить»</div></div>'
+      + '</div>';
+
+    var tabs = [['groups','Группы и разборы'],['registry','Реестр активностей'],['rating','Рейтинг групп']];
+    html += '<div class="kpi-filter-row" role="tablist">'
+      + tabs.map(function(tb){ return '<button type="button" role="tab" aria-selected="'+(wgTab===tb[0])+'" class="kpi-filter-btn'+(wgTab===tb[0]?' active':'')+'" data-action="wg-tab" data-tab="'+tb[0]+'">'+tb[1]+'</button>'; }).join('')
+      + '</div>';
+
+    if(wgTab==='groups') html += wgGroupsHtml(block);
+    else if(wgTab==='registry') html += wgRegistryHtml(block);
+    else html += wgRatingHtml(block, rating);
+
+    document.getElementById('content').innerHTML = html;
+  }
+
+  function wgGroupsHtml(block){
+    var rows = block.groups.map(function(g){
+      var total = wgReviewCount(g);
+      var normQ = (Number(g.norm)||0) * block.months.length;
+      var pct = normQ ? Math.round(total/normQ*100) : 0;
+      var fill = pct>=100 ? ' done' : pct>=50 ? '' : ' mid';
+      return '<tr>'
+        + '<td class="wg-name">'+esc(g.name)+'</td>'
+        + '<td><input class="wg-num" type="number" min="0" step="1" id="wg-doc-'+esc(g.id)+'" aria-label="Число врачей: '+esc(g.name)+'" data-wg-field="doctors" data-block="'+esc(block.id)+'" data-group="'+esc(g.id)+'" value="'+esc(g.doctors)+'"></td>'
+        + block.months.map(function(m){
+            var v = (g.reviews||{})[m];
+            return '<td><input class="wg-num" type="number" min="0" step="1" id="wg-rev-'+esc(g.id)+'-'+m+'" aria-label="Разборы, '+wgMonthLabel(m)+': '+esc(g.name)+'" data-wg-field="review" data-month="'+m+'" data-block="'+esc(block.id)+'" data-group="'+esc(g.id)+'" value="'+esc(v==null?'':v)+'" placeholder="—"></td>';
+          }).join('')
+        + '<td class="kpi-bar-wrap"><div class="progress"><div class="progress-fill'+fill+'" style="width:'+Math.min(100,pct)+'%"></div></div>'
+        + '<div class="kpi-bar-nums">'+total+' из '+normQ+' · '+pct+'% · норма '+g.norm+'/мес.</div></td>'
+        + WG_PRODUCTS.map(function(p){
+            var st = (g.products||{})[p[0]] || '';
+            return '<td><button type="button" class="wg-chip wg-'+(st||'none')+'" data-action="wg-cycle" data-block="'+esc(block.id)+'" data-group="'+esc(g.id)+'" data-key="'+p[0]+'" title="Нажмите, чтобы сменить статус">'+PRODUCT_LABEL[st]+'</button></td>';
+          }).join('')
+        + '</tr>';
+    }).join('');
+    return '<div class="table-scroll"><table class="task-table wg-table"><thead><tr>'
+      + '<th>Рабочая группа</th><th>Врачей</th>'
+      + block.months.map(function(m){ return '<th>'+wgMonthLabel(m)+'</th>'; }).join('')
+      + '<th>Разборы за квартал</th>'
+      + WG_PRODUCTS.map(function(p){ return '<th>'+p[1]+'</th>'; }).join('')
+      + '</tr></thead><tbody>'+rows+'</tbody></table></div>'
+      + '<p class="wg-note">Разборы считаются по пациентам. В первый год ведётся только учёт — на рейтинг и премирование не влияет (Положение, п. 4.3). '
+      + 'Продукты первого месяца — по протоколу от 23.06.2026: нажмите на статус, чтобы отметить «в работе» или «готово».</p>';
+  }
+
+  function wgRegistryHtml(block){
+    var list = block.activities.filter(function(a){ return wgFilter==='all' || a.group===wgFilter; });
+    list.sort(function(a,b){
+      if(a.group!==b.group){
+        return block.groups.findIndex(function(g){ return g.id===a.group; }) - block.groups.findIndex(function(g){ return g.id===b.group; });
+      }
+      return (b.date||'').localeCompare(a.date||'');
+    });
+    var total = 0;
+    var rows = list.map(function(a){
+      var cat = WG_CATS[a.cat] || {label:'Категория не выбрана', points:0};
+      var p = wgPoints(a);
+      total += p;
+      var reason = a.sponsor==='да' ? 'спонсор — 0' : !a.endpoint ? 'нет конечной точки' : '';
+      return '<tr>'
+        + '<td class="col-due">'+wgDateLabel(a.date)+'</td>'
+        + (wgFilter==='all' ? '<td class="col-owner">'+esc(wgGroupName(block, a.group))+'</td>' : '')
+        + '<td class="col-title"><div class="task-title-text" data-action="wg-edit" data-block="'+esc(block.id)+'" data-act="'+esc(a.id)+'" tabindex="0" role="button">'+esc(a.title)+'</div>'
+        + '<div class="task-notes">'+esc(cat.label)+(a.proof ? ' · '+esc(a.proof) : '')+'</div></td>'
+        + '<td>'+(a.sponsor==='уточнить' ? '<span class="status-badge progress">уточнить</span>' : a.sponsor==='да' ? '<span class="status-badge todo">да</span>' : 'нет')+'</td>'
+        + '<td>'+(a.endpoint ? 'да' : '<span class="status-badge todo">не достигнута</span>')+'</td>'
+        + '<td class="kpi-num wg-pts">'+fmtPts(p)+(reason ? '<span class="kpi-dir">'+reason+'</span>' : '')+'</td>'
+        + '<td class="col-actions"><button class="icon-btn" type="button" data-action="wg-edit" data-block="'+esc(block.id)+'" data-act="'+esc(a.id)+'" title="Изменить" aria-label="Изменить активность">✎</button>'
+        + '<button class="icon-btn danger" type="button" data-action="wg-del" data-block="'+esc(block.id)+'" data-act="'+esc(a.id)+'" title="Удалить" aria-label="Удалить активность">✕</button></td>'
+        + '</tr>';
+    }).join('');
+    var filter = '<div class="wg-toolbar"><label for="wg-filter">Группа</label><select id="wg-filter" data-wg-filter="1" data-block="'+esc(block.id)+'">'
+      + '<option value="all"'+(wgFilter==='all'?' selected':'')+'>Все группы</option>'
+      + block.groups.map(function(g){ return '<option value="'+esc(g.id)+'"'+(wgFilter===g.id?' selected':'')+'>'+esc(g.name)+'</option>'; }).join('')
+      + '</select><span class="agenda-count">'+list.length+' '+plural(list.length,'активность','активности','активностей')+' · '+fmtPts(total)+' баллов до применения капов</span></div>';
+    if(!list.length){
+      return filter + '<div class="empty-block">Активностей пока нет.<br><button class="btn btn-primary" type="button" data-action="wg-add" data-block="'+esc(block.id)+'">+ Активность</button></div>';
+    }
+    return filter + '<div class="table-scroll"><table class="task-table"><thead><tr>'
+      + '<th>Дата</th>'+(wgFilter==='all' ? '<th>Группа</th>' : '')+'<th>Тема и категория</th><th>Спонсор</th><th>Конечная точка</th><th>Баллы</th><th><span hidden>Действия</span></th>'
+      + '</tr></thead><tbody>'+rows+'</tbody></table></div>'
+      + '<p class="wg-note">Баллы начисляются только за завершённый результат и обнуляются при спонсорстве фармкомпании (Положение, раздел 2). Учёт ведётся по группам, без указания исполнителей.</p>';
+  }
+
+  function wgRatingHtml(block, rating){
+    var rows = rating.rows.slice().sort(function(a,b){ return b.index - a.index; });
+    var maxIdx = rows.length ? rows[0].index : 0;
+    var body = rows.map(function(r, i){
+      var w = maxIdx ? Math.round(r.index/maxIdx*100) : 0;
+      return '<tr>'
+        + '<td class="col-num">'+(i+1)+'</td>'
+        + '<td class="wg-name">'+esc(r.group.name)
+        + ((r.unclear||r.pending) ? '<span class="kpi-dir">'+(r.unclear ? 'уточнить спонсорство: '+r.unclear : '')+(r.unclear&&r.pending?' · ':'')+(r.pending ? 'ждут конечной точки: '+r.pending : '')+'</span>' : '')+'</td>'
+        + '<td class="kpi-num">'+r.doctors+'</td>'
+        + '<td class="kpi-num">'+fmtPts(r.raw)+'</td>'
+        + '<td class="kpi-num">'+(r.excess ? '−'+fmtPts(r.excess) : '—')+'</td>'
+        + '<td class="kpi-num"><strong>'+fmtPts(r.credited)+'</strong></td>'
+        + '<td class="kpi-num">'+fmtPts(r.perDoctor)+'</td>'
+        + '<td class="kpi-bar-wrap"><div class="progress"><div class="progress-fill" style="width:'+w+'%"></div></div>'
+        + '<div class="kpi-bar-nums">'+String(Math.round(r.index*1000)/1000).replace('.', ',')+'</div></td>'
+        + '</tr>';
+    }).join('');
+    return '<div class="table-scroll"><table class="task-table"><thead><tr>'
+      + '<th>Место</th><th>Рабочая группа</th><th>Врачей</th><th>Баллы</th><th>Превышение капов</th><th>Зачтено</th><th>На врача</th><th>Индекс</th>'
+      + '</tr></thead><tbody>'+body+'</tbody></table></div>'
+      + '<p class="wg-note">Индекс = 0,7 × доля группы по баллам на одного врача + 0,3 × доля группы в общей сумме баллов; сумма индексов всех групп равна 1 (Положение, п. 5.2). '
+      + 'Капы за квартал: журнальный клуб — не более '+WG_CAP_JOURNAL+' баллов, tumor board — не более '+WG_CAP_TUMOR+'. Число врачей меняется на вкладке «Группы и разборы». Премии в системе не рассчитываются.</p>';
+  }
+
+  function wgActivityModalHtml(block, act){
+    var isEdit = !!act;
+    act = act || {group: wgFilter!=='all' ? wgFilter : (block.groups[0]||{}).id, cat:'', date:todayStr(), title:'', sponsor:'нет', endpoint:true, proof:''};
+    var dateVal = /^\d{4}-\d{2}-\d{2}$/.test(act.date||'') ? act.date : '';
+    return '<form data-form="wg-activity" data-block="'+esc(block.id)+'"'+(isEdit?' data-act="'+esc(act.id)+'"':'')+'>'
+      + '<h3>'+(isEdit ? 'Изменить активность' : 'Новая активность')+'</h3>'
+      + '<div class="modal-sub">Баллы подставятся из справочника Положения. Исполнителей не указываем — учёт по группе.</div>'
+      + '<div class="field"><label for="f-wg-group">Рабочая группа</label><select id="f-wg-group" name="group" required>'
+      +   block.groups.map(function(g){ return '<option value="'+esc(g.id)+'"'+(g.id===act.group?' selected':'')+'>'+esc(g.name)+'</option>'; }).join('')
+      + '</select></div>'
+      + '<div class="field"><label for="f-wg-title">Тема / название</label><input type="text" id="f-wg-title" name="title" required value="'+esc(act.title)+'"></div>'
+      + '<div class="field"><label for="f-wg-cat">Категория</label><select id="f-wg-cat" name="cat" required>'
+      +   '<option value="">— выберите —</option>'
+      +   WG_CAT_SECTIONS.map(function(s){
+            return '<optgroup label="'+esc(s[0])+'">'+s[1].map(function(c){ return '<option value="'+c[0]+'"'+(c[0]===act.cat?' selected':'')+'>'+esc(c[1])+' — '+c[2]+' б.</option>'; }).join('')+'</optgroup>';
+          }).join('')
+      + '</select></div>'
+      + '<div class="field-row"><div class="field"><label for="f-wg-date">Дата</label><input type="date" id="f-wg-date" name="date" value="'+esc(dateVal)+'">'
+      +   (act.date && !dateVal ? '<span class="kpi-dir">сейчас: '+wgDateLabel(act.date)+'</span>' : '')+'</div>'
+      + '<div class="field"><label for="f-wg-proof">Подтверждение</label><input type="text" id="f-wg-proof" name="proof" value="'+esc(act.proof)+'" placeholder="DOI, программа, протокол"></div></div>'
+      + '<div class="field-row"><div class="field"><label for="f-wg-sponsor">Спонсор (фармкомпания)</label><select id="f-wg-sponsor" name="sponsor">'
+      +   ['нет','да','уточнить'].map(function(s){ return '<option value="'+s+'"'+(s===act.sponsor?' selected':'')+'>'+s+'</option>'; }).join('')
+      + '</select></div>'
+      + '<div class="field"><label for="f-wg-endpoint">Конечная точка достигнута</label><select id="f-wg-endpoint" name="endpoint">'
+      +   '<option value="yes"'+(act.endpoint?' selected':'')+'>да</option><option value="no"'+(!act.endpoint?' selected':'')+'>нет</option>'
+      + '</select></div></div>'
+      + '<div class="modal-actions">'
+      + (isEdit ? '<button type="button" class="btn btn-ghost" data-action="wg-del" data-block="'+esc(block.id)+'" data-act="'+esc(act.id)+'">Удалить</button>' : '<span></span>')
+      + '<div class="modal-actions-right"><button type="button" class="btn" data-action="close-modal">Отмена</button><button type="submit" class="btn btn-primary">Сохранить</button></div>'
+      + '</div></form>';
+  }
+
   function renderTaskBlock(block){
     var stats = blockStats(block);
     var topbar = document.getElementById('topbar');
@@ -1265,7 +1700,7 @@
     opts = opts || {};
     var isEdit = !!task;
     task = task || {title:'',owner:opts.ownerDefault||'',due:dueDefault||'',priority:'medium',status:'todo',notes:''};
-    var taskBlocks = state.blocks.filter(function(b){ return b.kind!=='kpi'; });
+    var taskBlocks = state.blocks.filter(function(b){ return b.kind==='tasks'; });
     var blockField = blockId
       ? '<div class="modal-sub">'+esc((findBlock(blockId)||{}).title||'')+'</div>'
       : '<div class="modal-sub">'+(task.due ? 'Срок: '+esc(fmtDate(task.due)) : 'Выберите проект, к которому относится задача.')+'</div>'
@@ -1366,7 +1801,8 @@
     lines.push('');
     state.blocks.forEach(function(b){
       var s = blockStats(b);
-      if(b.kind==='kpi') lines.push('- '+b.title+': достигнуто '+s.achieved+' из '+s.total+' KPI ('+s.pct+'%)');
+      if(b.kind==='wg') lines.push('- '+b.title+': групп '+s.groups+', зачтено баллов '+fmtPts(s.points)+', разборы '+s.reviews.done+' пациентов ('+s.pct+'% нормы за заполненные месяцы)');
+      else if(b.kind==='kpi') lines.push('- '+b.title+': достигнуто '+s.achieved+' из '+s.total+' KPI ('+s.pct+'%)');
       else lines.push('- '+b.title+': выполнено '+s.done+' из '+s.total+' ('+s.pct+'%)'+(s.overdue?', просрочено: '+s.overdue:''));
     });
     lines.push('');
@@ -1374,7 +1810,39 @@
       lines.push('## '+b.title);
       lines.push('');
       if(b.description){ lines.push(b.description); lines.push(''); }
-      if(b.kind==='kpi'){
+      if(b.kind==='wg'){
+        if(b.period){ lines.push('Период: '+b.period); lines.push(''); }
+        lines.push('### Рейтинг групп');
+        lines.push('');
+        lines.push('| Место | Группа | Врачей | Баллы | Превышение капов | Зачтено | На врача | Индекс |');
+        lines.push('|---|---|---|---|---|---|---|---|');
+        wgRating(b).rows.slice().sort(function(x,y){ return y.index-x.index; }).forEach(function(r, i){
+          lines.push('| '+(i+1)+' | '+r.group.name+' | '+r.doctors+' | '+fmtPts(r.raw)+' | '+fmtPts(r.excess)+' | '+fmtPts(r.credited)+' | '+fmtPts(r.perDoctor)+' | '+String(Math.round(r.index*1000)/1000).replace('.', ',')+' |');
+        });
+        lines.push('');
+        lines.push('### Клинические разборы (пациентов)');
+        lines.push('');
+        lines.push('| Группа | '+b.months.map(wgMonthLabel).join(' | ')+' | Итого | Норма за квартал | Продукты первого месяца |');
+        lines.push('|---|'+b.months.map(function(){ return '---|'; }).join('')+'---|---|---|');
+        b.groups.forEach(function(g){
+          var prod = WG_PRODUCTS.map(function(p){ return p[1]+': '+PRODUCT_LABEL[(g.products||{})[p[0]]||'']; }).join('; ');
+          lines.push('| '+g.name+' | '+b.months.map(function(m){ var v=(g.reviews||{})[m]; return (v===''||v==null)?'—':v; }).join(' | ')+' | '+wgReviewCount(g)+' | '+((Number(g.norm)||0)*b.months.length)+' | '+prod+' |');
+        });
+        lines.push('');
+        lines.push('### Реестр активностей');
+        lines.push('');
+        b.groups.forEach(function(g){
+          var acts = b.activities.filter(function(x){ return x.group===g.id; });
+          if(!acts.length) return;
+          lines.push('**'+g.name+'**');
+          lines.push('');
+          acts.forEach(function(x){
+            var cat = WG_CATS[x.cat] || {label:'—'};
+            lines.push('- ['+(x.endpoint?'x':' ')+'] '+x.title+' — '+cat.label+', '+wgDateLabel(x.date)+', спонсор: '+x.sponsor+', баллы: '+fmtPts(wgPoints(x))+(x.proof?', подтверждение: '+x.proof:''));
+          });
+          lines.push('');
+        });
+      } else if(b.kind==='kpi'){
         ROLE_ORDER.forEach(function(r){
           var kpis = b.kpis.filter(function(kp){ return kpiRoleOf(kp)===r; });
           if(kpis.length===0) return;
@@ -1432,7 +1900,8 @@
       var bid = el.getAttribute('data-block');
       var b = findBlock(bid);
       if(!b) return;
-      var what = b.kind==='kpi' ? 'вместе со всеми показателями ('+b.kpis.length+')' : 'вместе со всеми задачами ('+b.tasks.length+')';
+      var what = b.kind==='wg' ? 'вместе с реестром активностей ('+b.activities.length+') и данными групп'
+        : b.kind==='kpi' ? 'вместе со всеми показателями ('+b.kpis.length+')' : 'вместе со всеми задачами ('+b.tasks.length+')';
       askConfirm('Блок «'+b.title+'» будет удалён '+what+'. Отменить это действие нельзя.', 'Удалить блок', function(){ deleteBlock(bid); showToast('Блок удалён'); });
     } else if(action==='add-task'){
       openModal(taskModalHtml(el.getAttribute('data-block'), null));
@@ -1460,13 +1929,37 @@
       if(fn) fn();
     } else if(action==='download-report'){
       downloadReport();
+    } else if(action==='wg-tab'){
+      wgTab = el.getAttribute('data-tab');
+      render();
+    } else if(action==='wg-add' || action==='wg-edit'){
+      var wb = findBlock(el.getAttribute('data-block'));
+      if(!wb) return;
+      var wact = action==='wg-edit' ? wb.activities.find(function(x){ return x.id===el.getAttribute('data-act'); }) : null;
+      openModal(wgActivityModalHtml(wb, wact));
+    } else if(action==='wg-del'){
+      var wbid = el.getAttribute('data-block'), waid = el.getAttribute('data-act');
+      askConfirm('Активность будет удалена из реестра, баллы группы пересчитаются.', 'Удалить активность', function(){
+        var b4 = findBlock(wbid); if(!b4) return;
+        b4.activities = b4.activities.filter(function(x){ return x.id!==waid; });
+        saveState(); showToast('Активность удалена');
+      });
+    } else if(action==='wg-cycle'){
+      var b5 = findBlock(el.getAttribute('data-block'));
+      var gr5 = b5 && b5.groups.find(function(x){ return x.id===el.getAttribute('data-group'); });
+      if(!gr5) return;
+      gr5.products = gr5.products || {};
+      var key5 = el.getAttribute('data-key');
+      var next = {'':'progress', progress:'done', done:''};
+      gr5.products[key5] = next[gr5.products[key5]||''];
+      saveState();
     } else if(action==='profile-edit'){
       openModal(profileModalHtml());
     } else if(action==='add-mine'){
-      if(!state.blocks.some(function(b){ return b.kind!=='kpi'; })){ showToast('Сначала создайте блок-реестр задач.'); return; }
+      if(!state.blocks.some(function(b){ return b.kind==='tasks'; })){ showToast('Сначала создайте блок-реестр задач.'); return; }
       openModal(taskModalHtml(null, null, '', {ownerDefault: myName()}));
     } else if(action==='add-task-date'){
-      if(!state.blocks.some(function(b){ return b.kind!=='kpi'; })){ showToast('Сначала создайте блок-реестр задач.'); return; }
+      if(!state.blocks.some(function(b){ return b.kind==='tasks'; })){ showToast('Сначала создайте блок-реестр задач.'); return; }
       openModal(taskModalHtml(null, null, el.getAttribute('data-date')));
     } else if(action==='cal-shift'){
       var parts = (calMonth||todayStr().slice(0,7)).split('-');
@@ -1501,6 +1994,22 @@
   });
 
   document.addEventListener('change', function(e){
+    if(e.target.matches('[data-wg-filter]')){
+      wgFilter = e.target.value;
+      render();
+      return;
+    }
+    if(e.target.matches('[data-wg-field]')){
+      var wb = findBlock(e.target.getAttribute('data-block'));
+      var wg = wb && wb.groups.find(function(x){ return x.id===e.target.getAttribute('data-group'); });
+      if(!wg) return;
+      var raw = e.target.value.trim();
+      var num = raw==='' ? '' : Math.max(0, Math.round(Number(raw)||0));
+      if(e.target.getAttribute('data-wg-field')==='doctors') wg.doctors = num==='' ? 0 : num;
+      else { wg.reviews = wg.reviews || {}; wg.reviews[e.target.getAttribute('data-month')] = num; }
+      saveState();
+      return;
+    }
     var el = e.target.closest('[data-action="set-status"]');
     if(!el) return;
     setTaskStatus(el.getAttribute('data-block'), el.getAttribute('data-task'), el.value);
@@ -1519,6 +2028,25 @@
       if(!data.title) return;
       closeModal();
       if(taskId){ updateTask(blockId, taskId, data); showToast('Задача сохранена'); } else { addTask(blockId, data); showToast('Задача добавлена'); }
+    } else if(kind==='wg-activity'){
+      var wb = findBlock(form.getAttribute('data-block'));
+      if(!wb) return;
+      var actId = form.getAttribute('data-act');
+      var existing = actId ? wb.activities.find(function(x){ return x.id===actId; }) : null;
+      var wdata = {
+        group: fd.get('group'),
+        cat: fd.get('cat'),
+        title: (fd.get('title')||'').trim(),
+        date: fd.get('date') || (existing ? existing.date : ''),
+        proof: (fd.get('proof')||'').trim(),
+        sponsor: ['нет','да','уточнить'].indexOf(fd.get('sponsor'))>=0 ? fd.get('sponsor') : 'нет',
+        endpoint: fd.get('endpoint')==='yes'
+      };
+      if(!wdata.title || !WG_CATS[wdata.cat]) return;
+      closeModal();
+      if(existing){ Object.assign(existing, wdata); showToast('Активность сохранена'); }
+      else { wb.activities.push(Object.assign({id:uid('a')}, wdata)); showToast('Активность добавлена · '+fmtPts(wgPoints(wdata))+' б.'); }
+      saveState();
     } else if(kind==='profile'){
       var pname = (fd.get('name')||'').trim();
       if(!pname) return;
