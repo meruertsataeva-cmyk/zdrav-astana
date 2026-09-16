@@ -5,6 +5,7 @@
 - `zdrav-astana.html` — исходник приложения (HTML/CSS/JS, без сборки)
 - `PRD.md` — требования к продукту
 
-Рабочая версия: https://claude.ai/artifact/QJmC6WdxhbYPJWCXBSYkuA
+Сайт (GitHub Pages): https://meruertsataeva-cmyk.github.io/zdrav-astana/
+Версия на claude.ai: https://claude.ai/artifact/QJmC6WdxhbYPJWCXBSYkuA
 
-Автосохранение и выгрузка отчёта работают только внутри опубликованной страницы на claude.ai; при открытии файла локально данные живут до закрытия вкладки.
+На claude.ai данные хранятся на сервере и видны всем, кому открыта ссылка. На GitHub Pages данные сохраняются только в браузере конкретного пользователя (localStorage) и не синхронизируются между устройствами.

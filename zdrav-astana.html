@@ -494,10 +494,36 @@
   var downloads = null;
 
   /* ============ Инициализация хранилища ============ */
+  /* Вне claude.ai (например, GitHub Pages) данные хранятся в браузере */
+  var LOCAL_KEY = 'zdrav-astana-state';
+  var localAvailable = false;
+  function localLoad(){
+    try{
+      var raw = localStorage.getItem(LOCAL_KEY);
+      localAvailable = true;
+      if(raw){ var parsed = JSON.parse(raw); if(parsed && parsed.blocks) state = parsed; }
+    }catch(e){ localAvailable = false; }
+  }
+  function localSave(){
+    if(!localAvailable) return;
+    try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); }
+    catch(e){ localAvailable = false; renderNav(); }
+  }
+  function useCapability(name){
+    if(!window.claude || typeof window.claude.use !== 'function') return Promise.resolve(null);
+    return window.claude.use(name).catch(function(){ return null; });
+  }
+
   async function initDb(){
-    try{ db = await claude.use('db'); }catch(e){ db = null; }
+    db = await useCapability('db');
     dbChecked = true;
-    if(!db){ dbAvailable = false; migrateKpis(); render(); initDownloads(); return; }
+    if(!db){
+      dbAvailable = false;
+      localLoad();
+      migrateKpis();
+      localSave();
+      render(); initDownloads(); return;
+    }
     dbAvailable = true;
     stateDocRef = db.doc('app/state');
     try{
@@ -523,7 +549,7 @@
     initDownloads();
   }
   async function initDownloads(){
-    try{ downloads = await claude.use('downloads'); }catch(e){ downloads = null; }
+    downloads = await useCapability('downloads');
   }
 
   function persist(){
@@ -533,6 +559,7 @@
   function saveState(){
     render();
     if(dbAvailable && stateDocRef) persist();
+    else localSave();
   }
 
   /* ============ Вычисления ============ */
@@ -609,11 +636,14 @@
     nav.innerHTML = html;
 
     var footer = document.getElementById('sidebarFooter');
-    footer.innerHTML = '<span class="sync-dot'+(dbAvailable?'':' off')+'"></span>'
-      + (dbAvailable ? 'Изменения сохраняются автоматически' : (dbChecked ? 'Работа в режиме текущей сессии' : 'Подключение хранилища…'));
+    var saved = dbAvailable || localAvailable;
+    footer.innerHTML = '<span class="sync-dot'+(saved?'':' off')+'"></span>'
+      + (dbAvailable ? 'Изменения сохраняются автоматически'
+        : localAvailable ? 'Изменения сохраняются в этом браузере'
+        : (dbChecked ? 'Работа в режиме текущей сессии' : 'Подключение хранилища…'));
 
     var banner = document.getElementById('sidebarBanner');
-    banner.innerHTML = (dbChecked && !dbAvailable)
+    banner.innerHTML = (dbChecked && !saved)
       ? '<div class="sidebar-banner" role="status"><strong>Автосохранение недоступно в этом окне.</strong> Изменения останутся только до закрытия страницы — чтобы сохранить итоги, скачайте отчёт на странице «Обзор».</div>'
       : '';
   }
@@ -1008,9 +1038,19 @@
     return lines.join('\n');
   }
   async function downloadReport(){
-    if(!downloads){ try{ downloads = await claude.use('downloads'); }catch(e){} }
-    if(!downloads){ showToast('Скачивание файлов недоступно в этом окне просмотра.'); return; }
     var filename = 'otchet-proekty-'+todayStr()+'.md';
+    if(!downloads) downloads = await useCapability('downloads');
+    if(!downloads){
+      /* Обычный сайт: скачиваем файл средствами браузера */
+      try{
+        var url = URL.createObjectURL(new Blob([buildReport()], {type:'text/markdown;charset=utf-8'}));
+        var a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+      }catch(e){ showToast('Не удалось скачать отчёт в этом окне просмотра.'); }
+      return;
+    }
     try{
       await downloads.save({filename:filename, data:buildReport()});
     }catch(e){ /* пользователь отменил сохранение */ }
