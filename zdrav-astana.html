@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Управление проектами · Здравоохранение Астана</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=PT+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-bg:#EEF1EC;
+    --color-surface:#FFFFFF;
+    --color-surface-2:#F5F7F3;
+    --color-ink:#16241F;
+    --color-ink-muted:#5B655F;
+    --color-ink-faint:#8B958E;
+    --color-line:#D7DCD3;
+    --color-accent:#1F6F5C;
+    --color-accent-ink:#0F4438;
+    --color-accent-soft:#DCEAE5;
+    --color-sidebar-bg:#14211C;
+    --color-sidebar-ink:#EDEFE9;
+    --color-sidebar-muted:#93A39A;
+    --status-todo:#6F746C;
+    --status-todo-soft:#E7E8E4;
+    --status-progress:#9A650B;
+    --status-progress-soft:#F4E6CD;
+    --status-done:#2F7D53;
+    --status-done-soft:#DCEEE1;
+    --status-blocked:#B5482F;
+    --status-blocked-soft:#F3DFD8;
+    --shadow-modal:0 12px 40px rgba(15,25,20,0.25);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --color-bg:#0E1512;
+      --color-surface:#172420;
+      --color-surface-2:#1C2B26;
+      --color-ink:#EAEEE9;
+      --color-ink-muted:#9DAAA3;
+      --color-ink-faint:#6E7A73;
+      --color-line:#2B3B34;
+      --color-accent:#57B69A;
+      --color-accent-ink:#8FD6BE;
+      --color-accent-soft:#1E362F;
+      --color-sidebar-bg:#0A100D;
+      --color-sidebar-ink:#EAEEE9;
+      --color-sidebar-muted:#75847C;
+      --status-todo:#8B958E;
+      --status-todo-soft:#26312B;
+      --status-progress:#D79A3D;
+      --status-progress-soft:#3A2E17;
+      --status-done:#4FA97F;
+      --status-done-soft:#1B3226;
+      --status-blocked:#D06B4C;
+      --status-blocked-soft:#3B241C;
+      --shadow-modal:0 12px 40px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --color-bg:#0E1512;
+    --color-surface:#172420;
+    --color-surface-2:#1C2B26;
+    --color-ink:#EAEEE9;
+    --color-ink-muted:#9DAAA3;
+    --color-ink-faint:#6E7A73;
+    --color-line:#2B3B34;
+    --color-accent:#57B69A;
+    --color-accent-ink:#8FD6BE;
+    --color-accent-soft:#1E362F;
+    --color-sidebar-bg:#0A100D;
+    --color-sidebar-ink:#EAEEE9;
+    --color-sidebar-muted:#75847C;
+    --status-todo:#8B958E;
+    --status-todo-soft:#26312B;
+    --status-progress:#D79A3D;
+    --status-progress-soft:#3A2E17;
+    --status-done:#4FA97F;
+    --status-done-soft:#1B3226;
+    --status-blocked:#D06B4C;
+    --status-blocked-soft:#3B241C;
+    --shadow-modal:0 12px 40px rgba(0,0,0,0.5);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--color-bg);
+    color:var(--color-ink);
+    font-family:'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:'PT Serif', Georgia, 'Times New Roman', serif; font-weight:700; margin:0; text-wrap:balance; }
+  button{ font-family:inherit; }
+  input,select,textarea{ font-family:inherit; font-size:14px; color:var(--color-ink); background:var(--color-surface); border:1px solid var(--color-line); border-radius:2px; padding:9px 10px; }
+  input:focus,select:focus,textarea:focus{ outline:2px solid var(--color-accent); outline-offset:1px; }
+  button:focus-visible,[tabindex]:focus-visible{ outline:2px solid var(--color-accent); outline-offset:2px; }
+  a{ color:var(--color-accent-ink); }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
+
+  .app{ display:flex; min-height:100vh; align-items:stretch; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:270px; flex:0 0 270px;
+    background:var(--color-sidebar-bg); color:var(--color-sidebar-ink);
+    display:flex; flex-direction:column;
+    padding:26px 18px;
+  }
+  .brand{ display:flex; gap:12px; align-items:flex-start; margin-bottom:30px; padding:0 6px;}
+  .brand-mark{ width:38px;height:38px; border:1px solid var(--color-accent); border-radius:2px; display:flex; align-items:center; justify-content:center; font-family:'PT Serif',serif; font-weight:700; font-size:13px; color:#57B69A; flex:0 0 auto; letter-spacing:0.02em;}
+  .brand-title{ font-family:'PT Serif',serif; font-size:16px; line-height:1.3; }
+  .brand-sub{ font-size:11.5px; color:var(--color-sidebar-muted); margin-top:4px; }
+
+  .nav{ display:flex; flex-direction:column; gap:2px; }
+  .nav-item{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:2px; cursor:pointer; font-size:13.5px;
+    color:var(--color-sidebar-muted); border-left:2px solid transparent;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-item:hover{ background:rgba(255,255,255,0.05); color:var(--color-sidebar-ink); }
+  .nav-item.active{ color:var(--color-sidebar-ink); border-left-color:#57B69A; background:rgba(255,255,255,0.06); font-weight:500;}
+  .nav-item-label{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 auto; }
+  .nav-count{ font-size:11.5px; color:var(--color-sidebar-muted); flex:0 0 auto; font-variant-numeric:tabular-nums; }
+  .nav-del{ opacity:0; flex:0 0 auto; background:none; border:none; color:var(--color-sidebar-muted); cursor:pointer; padding:2px 4px; font-size:13px; line-height:1;}
+  .nav-item:hover .nav-del, .nav-del:focus-visible{ opacity:1; }
+  .nav-del:hover{ color:#E08A6E; }
+
+  .btn-add-block{
+    margin-top:10px; text-align:left; background:none; border:1px dashed rgba(255,255,255,0.18);
+    color:var(--color-sidebar-muted); border-radius:2px; padding:9px 12px; cursor:pointer; font-size:13px;
+  }
+  .btn-add-block:hover{ color:var(--color-sidebar-ink); border-color:rgba(255,255,255,0.35); }
+
+  .sidebar-spacer{ flex:1 1 auto; }
+  .sidebar-footer{ font-size:11px; color:var(--color-sidebar-muted); border-top:1px solid rgba(255,255,255,0.1); padding-top:14px; margin-top:14px; }
+  .sync-dot{ display:inline-block; width:6px;height:6px;border-radius:50%; background:#57B69A; margin-right:6px; }
+  .sync-dot.off{ background:#D79A3D; }
+  .sidebar-banner{ margin-top:14px; font-size:12px; line-height:1.45; color:#F0D9AE; background:rgba(215,154,61,0.14); border:1px solid rgba(215,154,61,0.35); border-radius:2px; padding:10px 12px; }
+
+  /* ---------- Main ---------- */
+  .main{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
+  .topbar{
+    padding:26px 40px; border-bottom:1px solid var(--color-line);
+    display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap; align-items:flex-start;
+    background:var(--color-surface);
+  }
+  .topbar-title{ font-size:22px; }
+  .topbar-desc{ color:var(--color-ink-muted); margin-top:6px; max-width:56ch; font-size:13.5px; }
+  .topbar-actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start; }
+  .content{ padding:30px 40px 70px; flex:1; }
+
+  .btn{
+    border:1px solid var(--color-line); background:var(--color-surface); color:var(--color-ink);
+    padding:9px 16px; border-radius:2px; cursor:pointer; font-size:13.5px;
+  }
+  .btn:hover{ border-color:var(--color-ink-faint); }
+  .btn-primary{ background:var(--color-accent); border-color:var(--color-accent); color:var(--color-surface); }
+  .btn-primary:hover{ background:var(--color-accent-ink); border-color:var(--color-accent-ink); }
+  .btn-ghost{ border-color:transparent; background:none; color:var(--color-ink-muted); }
+  .btn-ghost:hover{ color:var(--status-blocked); }
+
+  /* ---------- Overview ---------- */
+  .stat-strip{ display:flex; border:1px solid var(--color-line); border-radius:2px; overflow:hidden; background:var(--color-surface); margin-bottom:30px; flex-wrap:wrap;}
+  .stat{ flex:1 1 140px; padding:18px 22px; border-right:1px solid var(--color-line); }
+  .stat:last-child{ border-right:none; }
+  .stat-value{ font-family:'PT Serif',serif; font-size:30px; line-height:1; font-variant-numeric:tabular-nums; }
+  .stat-value.warn{ color:var(--status-blocked); }
+  .stat-label{ font-size:12px; color:var(--color-ink-muted); margin-top:6px; }
+
+  .section-title{ font-size:13px; color:var(--color-ink-muted); margin:0 0 14px; font-weight:500; letter-spacing:0.01em; }
+  .two-col{ display:grid; grid-template-columns:1.3fr 1fr; gap:30px; align-items:start; }
+  @media (max-width:980px){ .two-col{ grid-template-columns:1fr; } }
+
+  .block-progress-list{ display:flex; flex-direction:column; gap:16px; }
+  .bp-row-top{ display:flex; justify-content:space-between; gap:12px; font-size:13.5px; margin-bottom:6px; }
+  .bp-row-top .bp-name{ cursor:pointer; }
+  .bp-row-top .bp-name:hover{ color:var(--color-accent-ink); }
+  .bp-row-top .bp-meta{ color:var(--color-ink-muted); font-size:12.5px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .bp-meta .warn{ color:var(--status-blocked); font-weight:600; }
+
+  .deadline-list{ display:flex; flex-direction:column; border:1px solid var(--color-line); border-radius:2px; background:var(--color-surface); }
+  .deadline-item{ display:flex; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid var(--color-line); font-size:13px; align-items:center; }
+  .deadline-item:last-child{ border-bottom:none; }
+  .deadline-title{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .deadline-sub{ color:var(--color-ink-muted); font-size:12px; margin-top:2px; }
+  .deadline-date{ flex:0 0 auto; font-size:12.5px; color:var(--color-ink-muted); white-space:nowrap; font-variant-numeric:tabular-nums; text-align:right; }
+  .deadline-date.overdue{ color:var(--status-blocked); font-weight:600; }
+  .deadline-date small{ display:block; font-size:11px; font-weight:400; }
+  .empty-note{ padding:18px 16px; color:var(--color-ink-faint); font-size:13px; }
+
+  /* ---------- Progress bar ---------- */
+  .progress{ height:6px; background:var(--color-line); border-radius:3px; overflow:hidden; }
+  .progress-fill{ height:100%; background:var(--color-accent); }
+  .progress-fill.warn{ background:var(--status-blocked); }
+  .progress-fill.mid{ background:var(--status-progress); }
+  .progress-fill.done{ background:var(--status-done); }
+
+  /* ---------- Task table ---------- */
+  .table-scroll{ overflow-x:auto; border:1px solid var(--color-line); border-radius:2px; background:var(--color-surface); }
+  table.task-table{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:760px; }
+  .task-table thead th{ text-align:left; font-weight:500; font-size:11.5px; color:var(--color-ink-muted); padding:10px 14px; border-bottom:1px solid var(--color-line); white-space:nowrap; }
+  .task-table td{ padding:11px 14px; border-bottom:1px solid var(--color-line); vertical-align:middle; }
+  .task-table tr:last-child td{ border-bottom:none; }
+  .task-row.overdue td.col-title{ box-shadow:inset 3px 0 0 var(--status-blocked); }
+  .task-row.is-done .task-title-text{ color:var(--color-ink-muted); }
+  .col-num{ color:var(--color-ink-faint); width:32px; font-variant-numeric:tabular-nums; }
+  .col-title{ min-width:220px; }
+  .task-title-text{ cursor:pointer; }
+  .task-title-text:hover{ color:var(--color-accent-ink); }
+  .task-notes{ font-size:12px; color:var(--color-ink-muted); margin-top:2px; max-width:48ch; }
+  .col-owner{ color:var(--color-ink-muted); white-space:nowrap; }
+  .col-due{ white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .col-due.overdue{ color:var(--status-blocked); font-weight:600; }
+  .overdue-tag{ display:block; font-size:11px; font-weight:500; }
+  .priority-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  .priority-high .priority-dot{ background:var(--status-blocked); }
+  .priority-medium .priority-dot{ background:var(--status-progress); }
+  .priority-low .priority-dot{ background:var(--status-todo); }
+  td.priority-high, td.priority-medium, td.priority-low{ white-space:nowrap; }
+  .col-actions{ white-space:nowrap; text-align:right; }
+
+  .status-select{ font-size:12.5px; padding:5px 8px; border-radius:2px; border:1px solid var(--color-line); cursor:pointer; }
+  .status-select.status-todo{ background:var(--status-todo-soft); color:var(--status-todo); border-color:transparent; }
+  .status-select.status-progress{ background:var(--status-progress-soft); color:var(--status-progress); border-color:transparent; }
+  .status-select.status-done{ background:var(--status-done-soft); color:var(--status-done); border-color:transparent; }
+  .status-select.status-blocked{ background:var(--status-blocked-soft); color:var(--status-blocked); border-color:transparent; }
+
+  .icon-btn{ background:none; border:none; color:var(--color-ink-faint); cursor:pointer; padding:4px 6px; font-size:13px; border-radius:2px; }
+  .icon-btn:hover{ color:var(--color-ink); background:var(--color-surface-2); }
+  .icon-btn.danger:hover{ color:var(--status-blocked); }
+
+  /* ---------- KPI table ---------- */
+  .kpi-filter-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+  .kpi-filter-btn{ border:1px solid var(--color-line); background:var(--color-surface); color:var(--color-ink-muted); padding:7px 13px; border-radius:2px; cursor:pointer; font-size:12.5px; }
+  .kpi-filter-btn span{ color:var(--color-ink-faint); margin-left:4px; font-variant-numeric:tabular-nums; }
+  .kpi-filter-btn:hover{ color:var(--color-ink); border-color:var(--color-ink-faint); }
+  .kpi-filter-btn.active{ background:var(--color-accent-soft); border-color:var(--color-accent); color:var(--color-accent-ink); font-weight:500; }
+  .kpi-filter-btn.active span{ color:var(--color-accent-ink); }
+  .kpi-group{ margin-bottom:26px; }
+  .kpi-group:last-child{ margin-bottom:0; }
+  .kpi-group-title{ display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap; font-family:'PT Serif',serif; font-size:15px; margin-bottom:10px; }
+  .kpi-group-count{ font-family:'IBM Plex Sans',sans-serif; font-size:12px; color:var(--color-ink-muted); font-weight:400; }
+  table.kpi-table{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:720px; }
+  .kpi-table thead th{ text-align:left; font-weight:500; font-size:11.5px; color:var(--color-ink-muted); padding:10px 14px; border-bottom:1px solid var(--color-line); white-space:nowrap; }
+  .kpi-table td{ padding:12px 14px; border-bottom:1px solid var(--color-line); vertical-align:middle; }
+  .kpi-table tr:last-child td{ border-bottom:none; }
+  .kpi-name{ min-width:220px; }
+  .kpi-dir{ display:block; font-size:11.5px; color:var(--color-ink-faint); margin-top:2px; }
+  .kpi-num{ white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .kpi-bar-wrap{ min-width:140px; }
+  .kpi-bar-nums{ font-size:11.5px; color:var(--color-ink-muted); margin-top:4px; font-variant-numeric:tabular-nums; }
+  .status-badge{ display:inline-flex; align-items:center; padding:3px 9px; border-radius:2px; font-size:12px; white-space:nowrap; }
+  .status-badge.done{ background:var(--status-done-soft); color:var(--status-done); }
+  .status-badge.progress{ background:var(--status-progress-soft); color:var(--status-progress); }
+  .status-badge.todo{ background:var(--status-todo-soft); color:var(--status-todo); }
+
+  /* ---------- Empty state ---------- */
+  .empty-block{ padding:60px 20px; text-align:center; color:var(--color-ink-muted); border:1px dashed var(--color-line); border-radius:2px; background:var(--color-surface); }
+  .empty-block .btn{ margin-top:14px; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{ position:fixed; inset:0; background:rgba(10,16,13,0.45); display:none; align-items:flex-start; justify-content:center; padding:8vh 16px 20px; z-index:50; overflow-y:auto; }
+  .modal-overlay.open{ display:flex; }
+  .modal{ background:var(--color-surface); border-radius:3px; width:100%; max-width:460px; box-shadow:var(--shadow-modal); padding:26px 26px 22px; }
+  .modal h3{ font-size:17px; margin-bottom:4px; }
+  .modal-sub{ font-size:12.5px; color:var(--color-ink-muted); margin-bottom:18px; }
+  .field{ margin-bottom:14px; }
+  .field label, .field legend{ display:block; font-size:12.5px; color:var(--color-ink-muted); margin-bottom:5px; padding:0; }
+  .field input, .field select, .field textarea{ width:100%; }
+  fieldset.field{ border:none; margin:0 0 14px; padding:0; }
+  .kind-options{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .kind-option{ display:flex; gap:8px; align-items:flex-start; border:1px solid var(--color-line); border-radius:2px; padding:10px 12px; cursor:pointer; font-size:13px; color:var(--color-ink); }
+  .kind-option input{ width:auto; margin:3px 0 0; }
+  .kind-option small{ display:block; color:var(--color-ink-muted); font-size:11.5px; }
+  .kind-option:has(input:checked){ border-color:var(--color-accent); background:var(--color-accent-soft); }
+  .field-row{ display:flex; gap:12px; }
+  .field-row .field{ flex:1; min-width:0; }
+  .modal-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:20px; gap:10px; }
+  .modal-actions-right{ display:flex; gap:10px; }
+  @media (max-width:480px){
+    .field-row{ flex-direction:column; gap:0; }
+    .kind-options{ grid-template-columns:1fr; }
+    .modal{ padding:22px 18px 18px; }
+  }
+
+  .toast{ position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--color-ink); color:var(--color-bg); font-size:13px; padding:10px 16px; border-radius:2px; box-shadow:var(--shadow-modal); z-index:60; max-width:calc(100% - 32px); }
+
+  @media (max-width:820px){
+    .app{ flex-direction:column; }
+    .sidebar{ width:100%; flex:0 0 auto; padding:16px 16px; }
+    .brand{ margin-bottom:16px; }
+    .nav{ flex-direction:row; overflow-x:auto; gap:6px; padding-bottom:4px; }
+    .nav-item{ flex:0 0 auto; border-left:none; border-bottom:2px solid transparent; }
+    .nav-item.active{ border-left:none; border-bottom-color:#57B69A; }
+    .nav-del{ opacity:0.6; }
+    .btn-add-block{ margin-top:8px; align-self:flex-start; padding:7px 12px; }
+    .sidebar-spacer{ display:none; }
+    .sidebar-footer{ display:none; }
+    .topbar, .content{ padding-left:16px; padding-right:16px; }
+    .stat{ flex:1 1 45%; border-right:none; border-bottom:1px solid var(--color-line); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">ЗД</div>
+      <div>
+        <div class="brand-title">Управление проектами</div>
+        <div class="brand-sub">Здравоохранение · Астана</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <button class="btn-add-block" type="button" id="addBlockBtn">+ Добавить блок</button>
+    <div id="sidebarBanner"></div>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer" id="sidebarFooter"></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+
+  /* ============ Данные по умолчанию ============ */
+  var KPI_VERSION = 3;
+
+  function uid(prefix){ return prefix+'_'+Math.random().toString(36).slice(2,9); }
+  function t(title,owner,due,priority,status,notes){
+    return {id:uid('t'), title:title, owner:owner||'', due:due||'', priority:priority||'medium', status:status||'todo', notes:notes||''};
+  }
+  function k(name,target,current,unit,direction,role){
+    return {id:uid('k'), name:name, target:target, current:current, unit:unit, direction:direction, role:role||'process'};
+  }
+
+  function buildKpiList(){
+    return [
+      k('Охват диспансеризацией', 90, 34, '%', 'up', 'process'),
+      k('Среднее время ожидания записи', 3, 6, 'дн.', 'down', 'process'),
+      k('Доля патологий, выявленных на ранней стадии', 60, 0, '%', 'up', 'process'),
+      k('Занятость коечного фонда (стационар)', 85, 0, '%', 'up', 'process'),
+      k('Среднее время от поступления до размещения', 30, 0, 'мин.', 'down', 'process'),
+      k('Соблюдение сроков проекта', 100, 52, '%', 'up', 'process'),
+
+      k('Соблюдение протоколов химиотерапии и таргетной терапии', 100, 85, '%', 'up', 'doctors'),
+      k('Подтверждение диагноза в течение 72 часов после поступления анализов', 90, 68, '%', 'up', 'doctors'),
+      k('Достижение ремиссии по плану курсов терапии', 70, 48, '%', 'up', 'doctors'),
+      k('Среднее время коррекции терапии по контрольным анализам', 24, 36, 'ч.', 'down', 'doctors'),
+      k('Тяжёлые нежелательные явления терапии (степень 3–4)', 5, 9, '%', 'down', 'doctors'),
+      k('Удовлетворённость пациентов консультацией врача', 90, 74, '%', 'up', 'doctors'),
+
+      k('Соблюдение протокола введения химиопрепаратов', 100, 90, '%', 'up', 'nurses'),
+      k('Ошибки при заборе крови и переливании компонентов крови', 0, 1, 'случ.', 'down', 'nurses'),
+      k('Своевременность мониторинга состояния пациента во время инфузии', 100, 86, '%', 'up', 'nurses'),
+      k('Среднее время подготовки к инфузии химиотерапии', 30, 42, 'мин.', 'down', 'nurses'),
+      k('Укомплектованность процедурных и палатных смен', 100, 75, '%', 'up', 'nurses'),
+      k('Нарушения асептики в стерильных боксах', 0, 2, 'случ.', 'down', 'nurses'),
+
+      k('Среднее время выполнения общего анализа крови', 30, 45, 'мин.', 'down', 'lab'),
+      k('Своевременность выдачи результатов миелограммы и цитогенетики', 24, 36, 'ч.', 'down', 'lab'),
+      k('Повторные исследования из-за преаналитических ошибок', 2, 5, '%', 'down', 'lab'),
+      k('Контроль качества трансфузионных сред перед переливанием', 100, 92, '%', 'up', 'lab'),
+
+      k('Соблюдение режима стерильной уборки боксов для пациентов с нейтропенией', 100, 80, '%', 'up', 'orderlies'),
+      k('Своевременность транспортировки образцов крови в лабораторию', 100, 88, '%', 'up', 'orderlies'),
+      k('Укомплектованность смен младшего медперсонала', 100, 68, '%', 'up', 'orderlies'),
+      k('Замечания по санитарному состоянию процедурных кабинетов', 0, 3, 'шт.', 'down', 'orderlies'),
+    ];
+  }
+
+  function defaultState(){
+    return {
+      kpiVersion: KPI_VERSION,
+      blocks: [
+        {
+          id:'b-dispanser', kind:'tasks',
+          title:'Диспансеризация в Астане',
+          description:'Запуск программы профилактических осмотров прикреплённого населения.',
+          tasks:[
+            t('Утверждение приказа и программы диспансеризации','Главный врач','2026-08-25','high','done'),
+            t('Формирование графика по участкам и поликлиникам','Зам. по поликлинической работе','2026-09-10','high','done'),
+            t('Обучение и допуск медперсонала','Отдел кадров','2026-09-20','high','progress'),
+            t('Проверка и калибровка диагностического оборудования','Инженер мед. техники','2026-09-18','medium','progress'),
+            t('Настройка электронной записи в МИС','IT-отдел','2026-09-12','high','blocked','Ожидает интеграции с региональной системой записи'),
+            t('Информационная кампания для населения','Пресс-служба','2026-09-25','medium','todo'),
+            t('Пилотный запуск на одной поликлинике','Руководитель проекта','2026-10-01','high','todo'),
+            t('Масштабирование на всё прикреплённое население','Руководитель проекта','2026-11-01','high','todo'),
+            t('Отчёт в Управление здравоохранения г. Астаны','Руководитель проекта','2026-10-05','low','todo'),
+          ]
+        },
+        {
+          id:'b-stacionar', kind:'tasks',
+          title:'Круглосуточный стационар',
+          description:'Запуск отделения круглосуточного стационарного лечения.',
+          tasks:[
+            t('Получение лицензии на стационарную помощь','Юридический отдел','2026-09-05','high','done'),
+            t('Укомплектование штата дежурных врачей и медсестёр','Отдел кадров','2026-09-22','high','progress'),
+            t('Формирование графика дежурств 24/7','Старшая медсестра','2026-09-19','medium','progress'),
+            t('Закупка коечного фонда и оборудования','Отдел снабжения','2026-09-14','high','blocked','Задержка поставки от подрядчика'),
+            t('Организация приёмного покоя и триажа','Зав. приёмным отделением','2026-09-28','high','todo'),
+            t('Согласование маршрутизации со скорой помощью','Руководитель проекта','2026-10-02','medium','todo'),
+            t('Утверждение клинических протоколов','Медицинский совет','2026-09-30','high','todo'),
+            t('Приёмка пожарной безопасности и СЭС','Служба эксплуатации','2026-10-05','high','todo'),
+            t('Тестовый запуск на ограниченном коечном фонде','Руководитель проекта','2026-10-10','high','todo'),
+            t('Полный запуск круглосуточного режима','Руководитель проекта','2026-10-20','high','todo'),
+          ]
+        },
+        {
+          id:'b-kpi', kind:'kpi',
+          title:'KPI',
+          description:'Ключевые показатели эффективности по проектам и по персоналу Центра гематологии.',
+          kpis: buildKpiList()
+        }
+      ]
+    };
+  }
+
+  /* Миграции: версия 1 → полная пересборка KPI (категорий ещё не было);
+     версия 2 → дописать недостающие категории, не трогая введённые значения. */
+  function normalizeState(){
+    var changed = false;
+    if(!Array.isArray(state.blocks)){ state.blocks = []; changed = true; }
+    state.blocks.forEach(function(b){
+      if(b.kind==='kpi'){ if(!Array.isArray(b.kpis)){ b.kpis=[]; changed=true; } }
+      else { if(b.kind!=='tasks'){ b.kind='tasks'; changed=true; } if(!Array.isArray(b.tasks)){ b.tasks=[]; changed=true; } }
+    });
+    return changed;
+  }
+  function migrateKpis(){
+    var changed = normalizeState();
+    var version = Number(state.kpiVersion)||1;
+    if(version >= KPI_VERSION) return changed;
+    var block = state.blocks.find(function(b){ return b.id==='b-kpi'; });
+    if(block){
+      block.description = 'Ключевые показатели эффективности по проектам и по персоналу Центра гематологии.';
+      if(version < 2){
+        block.kpis = buildKpiList();
+      } else {
+        var present = {};
+        block.kpis.forEach(function(kp){ present[kp.role||'process'] = true; });
+        buildKpiList().forEach(function(kp){ if(!present[kp.role]) block.kpis.push(kp); });
+      }
+    }
+    state.kpiVersion = KPI_VERSION;
+    return true;
+  }
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function pad(n){ return String(n).padStart(2,'0'); }
+  /* Локальная дата пользователя (Астана, UTC+5), а не UTC */
+  function todayStr(){ var d = new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function fmtDate(iso){
+    if(!iso) return '—';
+    var d = new Date(iso+'T00:00:00');
+    if(isNaN(d)) return iso;
+    return d.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric'});
+  }
+  function daysBetween(fromIso, toIso){
+    return Math.round((new Date(toIso+'T00:00:00') - new Date(fromIso+'T00:00:00'))/86400000);
+  }
+  function plural(n, one, few, many){
+    var m10 = n%10, m100 = n%100;
+    if(m10===1 && m100!==11) return one;
+    if(m10>=2 && m10<=4 && (m100<10 || m100>=20)) return few;
+    return many;
+  }
+  function fmtNum(v){ var n = Number(v); return isNaN(n) ? esc(v) : String(n).replace('.', ','); }
+
+  var PRIORITY_LABEL = {high:'Высокий', medium:'Средний', low:'Низкий'};
+  var STATUS_LABEL = {todo:'К выполнению', progress:'В работе', done:'Готово', blocked:'Заблокировано'};
+  var ROLE_LABEL = {process:'Процессные показатели', doctors:'Врачи-гематологи', nurses:'Медицинские сёстры', lab:'Лаборатория', orderlies:'Санитарки'};
+  var ROLE_ORDER = ['process','doctors','nurses','lab','orderlies'];
+  var kpiFilter = 'all';
+
+  /* ============ Состояние ============ */
+  var state = defaultState();
+  var currentBlockId = 'overview';
+  var db = null, stateDocRef = null, dbAvailable = false, dbChecked = false, writeChain = Promise.resolve();
+  var downloads = null;
+
+  /* ============ Инициализация хранилища ============ */
+  async function initDb(){
+    try{ db = await claude.use('db'); }catch(e){ db = null; }
+    dbChecked = true;
+    if(!db){ dbAvailable = false; migrateKpis(); render(); initDownloads(); return; }
+    dbAvailable = true;
+    stateDocRef = db.doc('app/state');
+    try{
+      var snap = await stateDocRef.get();
+      if(snap.exists && snap.data() && snap.data().blocks){
+        state = snap.data();
+      } else {
+        await stateDocRef.set(state);
+      }
+    }catch(e){ dbAvailable = false; }
+    var migrated = migrateKpis();
+    render();
+    if(migrated && dbAvailable) persist();
+    try{
+      stateDocRef.onSnapshot(function(snap){
+        if(snap.exists && snap.data() && snap.data().blocks){
+          state = snap.data();
+          if(migrateKpis() && dbAvailable) persist();
+          render();
+        }
+      }, function(err){ console.error('db onSnapshot error', err); });
+    }catch(e){}
+    initDownloads();
+  }
+  async function initDownloads(){
+    try{ downloads = await claude.use('downloads'); }catch(e){ downloads = null; }
+  }
+
+  function persist(){
+    writeChain = writeChain.then(function(){ return stateDocRef.set(state); })
+      .catch(function(err){ console.error('Ошибка сохранения', err); showToast('Изменение не сохранилось. Проверьте соединение и повторите действие.'); });
+  }
+  function saveState(){
+    render();
+    if(dbAvailable && stateDocRef) persist();
+  }
+
+  /* ============ Вычисления ============ */
+  function isOverdue(task){ return task.status!=='done' && task.status!=='blocked' && !!task.due && task.due < todayStr(); }
+  function kpiStatus(kp){
+    var raw = kp.current;
+    var notEntered = raw==='' || raw==null;
+    var current = Number(raw)||0, target = Number(kp.target)||0;
+    var achieved, pct;
+    if(kp.direction==='down'){
+      if(notEntered || (!current && target>0)) return {label:'Не начато', cls:'todo', pct:0, achieved:false};
+      achieved = current<=target;
+      pct = achieved ? 100 : (current>0 ? Math.round(Math.min(100, (target||0)/current*100)) : 0);
+    } else {
+      if(notEntered || !current) return {label:'Не начато', cls:'todo', pct:0, achieved:false};
+      achieved = target>0 ? current>=target : true;
+      pct = target>0 ? Math.round(Math.min(100, current/target*100)) : 100;
+    }
+    return {label: achieved?'Достигнуто':'В процессе', cls: achieved?'done':'progress', pct:pct, achieved:achieved};
+  }
+  function blockStats(block){
+    if(block.kind==='kpi'){
+      var total = block.kpis.length, achieved = 0;
+      block.kpis.forEach(function(kp){ if(kpiStatus(kp).achieved) achieved++; });
+      return {total:total, achieved:achieved, pct: total? Math.round(achieved/total*100) : 0};
+    }
+    var tasks = block.tasks, total2 = tasks.length, done=0, overdue=0;
+    tasks.forEach(function(tk){ if(tk.status==='done') done++; if(isOverdue(tk)) overdue++; });
+    return {total:total2, done:done, overdue:overdue, pct: total2? Math.round(done/total2*100) : 0};
+  }
+  function aggregate(){
+    var total=0, done=0, progress=0, overdue=0, blocked=0;
+    state.blocks.forEach(function(b){
+      if(b.kind==='kpi') return;
+      b.tasks.forEach(function(tk){
+        total++;
+        if(tk.status==='done') done++;
+        else if(tk.status==='progress') progress++;
+        else if(tk.status==='blocked') blocked++;
+        if(isOverdue(tk)) overdue++;
+      });
+    });
+    return {total:total, done:done, progress:progress, overdue:overdue, blocked:blocked};
+  }
+  function upcomingDeadlines(limit){
+    var items = [];
+    state.blocks.forEach(function(b){
+      if(b.kind==='kpi') return;
+      b.tasks.forEach(function(tk){
+        if(tk.status==='done' || !tk.due) return;
+        items.push({task:tk, block:b});
+      });
+    });
+    items.sort(function(a,b){ return a.task.due < b.task.due ? -1 : (a.task.due > b.task.due ? 1 : 0); });
+    return items.slice(0, limit||6);
+  }
+  function kpiRoleOf(kp){ return ROLE_LABEL[kp.role] ? kp.role : 'process'; }
+
+  /* ============ Рендер: навигация ============ */
+  function renderNav(){
+    var nav = document.getElementById('nav');
+    var html = '';
+    html += '<div class="nav-item'+(currentBlockId==='overview'?' active':'')+'" data-action="nav-select" data-block="overview" tabindex="0" role="button">'
+      + '<span class="nav-item-label">Обзор</span></div>';
+    state.blocks.forEach(function(b){
+      var stats = blockStats(b);
+      var count = b.kind==='kpi' ? (stats.achieved+'/'+stats.total) : (stats.done+'/'+stats.total);
+      html += '<div class="nav-item'+(currentBlockId===b.id?' active':'')+'" data-action="nav-select" data-block="'+esc(b.id)+'" tabindex="0" role="button">'
+        + '<span class="nav-item-label">'+esc(b.title)+'</span>'
+        + '<span class="nav-count">'+count+'</span>'
+        + '<button class="nav-del" type="button" data-action="delete-block" data-block="'+esc(b.id)+'" title="Удалить блок" aria-label="Удалить блок «'+esc(b.title)+'»">✕</button>'
+        + '</div>';
+    });
+    nav.innerHTML = html;
+
+    var footer = document.getElementById('sidebarFooter');
+    footer.innerHTML = '<span class="sync-dot'+(dbAvailable?'':' off')+'"></span>'
+      + (dbAvailable ? 'Изменения сохраняются автоматически' : (dbChecked ? 'Работа в режиме текущей сессии' : 'Подключение хранилища…'));
+
+    var banner = document.getElementById('sidebarBanner');
+    banner.innerHTML = (dbChecked && !dbAvailable)
+      ? '<div class="sidebar-banner" role="status"><strong>Автосохранение недоступно в этом окне.</strong> Изменения останутся только до закрытия страницы — чтобы сохранить итоги, скачайте отчёт на странице «Обзор».</div>'
+      : '';
+  }
+
+  /* ============ Рендер: содержимое ============ */
+  function render(){
+    renderNav();
+    if(currentBlockId==='overview'){ renderOverview(); }
+    else {
+      var block = state.blocks.find(function(b){ return b.id===currentBlockId; });
+      if(!block){ currentBlockId='overview'; renderOverview(); return; }
+      if(block.kind==='kpi'){ renderKpiBlock(block); } else { renderTaskBlock(block); }
+    }
+  }
+
+  function renderOverview(){
+    var agg = aggregate();
+    var topbar = document.getElementById('topbar');
+    topbar.innerHTML =
+      '<div><h1 class="topbar-title">Обзор проектов</h1>'
+      + '<div class="topbar-desc">Сводка по всем блокам на '+fmtDate(todayStr())+'.</div></div>'
+      + '<div class="topbar-actions"><button class="btn" type="button" data-action="download-report">Скачать отчёт</button></div>';
+
+    var content = document.getElementById('content');
+    var html = '';
+    html += '<div class="stat-strip">'
+      + '<div class="stat"><div class="stat-value">'+agg.total+'</div><div class="stat-label">Задач всего</div></div>'
+      + '<div class="stat"><div class="stat-value">'+agg.done+'</div><div class="stat-label">Выполнено</div></div>'
+      + '<div class="stat"><div class="stat-value">'+agg.progress+'</div><div class="stat-label">В работе</div></div>'
+      + '<div class="stat"><div class="stat-value'+(agg.overdue?' warn':'')+'">'+agg.overdue+'</div><div class="stat-label">Просрочено'+(agg.blocked?' · заблокировано: '+agg.blocked:'')+'</div></div>'
+      + '</div>';
+
+    html += '<div class="two-col">';
+
+    html += '<div><h2 class="section-title">Прогресс по блокам</h2><div class="block-progress-list">';
+    if(state.blocks.length===0){
+      html += '<div class="empty-note">Блоки ещё не созданы.</div>';
+    } else {
+      state.blocks.forEach(function(b){
+        var stats = blockStats(b);
+        var meta, fillCls = '';
+        if(b.kind==='kpi'){
+          meta = stats.achieved+' из '+stats.total+' KPI достигнуто';
+        } else {
+          meta = stats.done+' из '+stats.total+' · '+stats.pct+'%'
+            + (stats.overdue ? ' · <span class="warn">'+stats.overdue+' просроч. ('+Math.round(stats.overdue/stats.total*100)+'%)</span>' : '');
+          if(stats.overdue) fillCls = ' warn';
+        }
+        html += '<div class="bp-row"><div class="bp-row-top"><span class="bp-name" data-action="nav-select" data-block="'+esc(b.id)+'" tabindex="0" role="button">'+esc(b.title)+'</span>'
+          + '<span class="bp-meta">'+meta+'</span></div>'
+          + '<div class="progress"><div class="progress-fill'+fillCls+'" style="width:'+stats.pct+'%"></div></div></div>';
+      });
+    }
+    html += '</div></div>';
+
+    html += '<div><h2 class="section-title">Ближайшие сроки</h2><div class="deadline-list">';
+    var deadlines = upcomingDeadlines(7);
+    var today = todayStr();
+    if(deadlines.length===0){
+      html += '<div class="empty-note">Нет открытых задач со сроками.</div>';
+    } else {
+      deadlines.forEach(function(item){
+        var tk = item.task, overdue = isOverdue(tk);
+        var diff = daysBetween(today, tk.due), hint;
+        if(tk.status==='blocked') hint = 'заблокировано';
+        else if(diff<0) hint = 'просрочено на '+(-diff)+' '+plural(-diff,'день','дня','дней');
+        else if(diff===0) hint = 'сегодня';
+        else hint = 'через '+diff+' '+plural(diff,'день','дня','дней');
+        html += '<div class="deadline-item"><div style="min-width:0;">'
+          + '<div class="deadline-title" title="'+esc(tk.title)+'">'+esc(tk.title)+'</div>'
+          + '<div class="deadline-sub">'+esc(item.block.title)+' · '+esc(tk.owner||'без ответственного')+'</div></div>'
+          + '<div class="deadline-date'+(overdue?' overdue':'')+'">'+fmtDate(tk.due)+'<small>'+hint+'</small></div></div>';
+      });
+    }
+    html += '</div></div>';
+
+    html += '</div>';
+    content.innerHTML = html;
+  }
+
+  function renderTaskBlock(block){
+    var stats = blockStats(block);
+    var topbar = document.getElementById('topbar');
+    topbar.innerHTML =
+      '<div><h1 class="topbar-title">'+esc(block.title)+'</h1>'
+      + (block.description ? '<div class="topbar-desc">'+esc(block.description)+'</div>' : '')
+      + '<div style="display:flex;align-items:center;gap:10px;margin-top:12px;max-width:320px;">'
+      + '<div class="progress" style="flex:1;"><div class="progress-fill'+(stats.overdue?' warn':'')+'" style="width:'+stats.pct+'%"></div></div>'
+      + '<span style="font-size:12.5px;color:var(--color-ink-muted);white-space:nowrap;">'+stats.done+'/'+stats.total+' · '+stats.pct+'%'+(stats.overdue?' · <span style="color:var(--status-blocked);font-weight:600;">просрочено: '+stats.overdue+'</span>':'')+'</span>'
+      + '</div></div>'
+      + '<div class="topbar-actions"><button class="btn btn-primary" type="button" data-action="add-task" data-block="'+esc(block.id)+'">+ Добавить задачу</button></div>';
+
+    var content = document.getElementById('content');
+    if(block.tasks.length===0){
+      content.innerHTML = '<div class="empty-block">В этом блоке пока нет задач.<br><button class="btn btn-primary" type="button" data-action="add-task" data-block="'+esc(block.id)+'">+ Добавить первую задачу</button></div>';
+      return;
+    }
+    var rows = block.tasks.map(function(tk, idx){
+      var overdue = isOverdue(tk);
+      var pr = PRIORITY_LABEL[tk.priority] ? tk.priority : 'medium';
+      var st = STATUS_LABEL[tk.status] ? tk.status : 'todo';
+      return '<tr class="task-row'+(overdue?' overdue':'')+(st==='done'?' is-done':'')+'">'
+        + '<td class="col-num">'+pad(idx+1)+'</td>'
+        + '<td class="col-title"><div class="task-title-text" data-action="edit-task" data-block="'+esc(block.id)+'" data-task="'+esc(tk.id)+'" tabindex="0" role="button">'+esc(tk.title)+'</div>'
+        + (tk.notes ? '<div class="task-notes">'+esc(tk.notes)+'</div>' : '')+'</td>'
+        + '<td class="col-owner">'+esc(tk.owner||'—')+'</td>'
+        + '<td class="col-due'+(overdue?' overdue':'')+'">'+fmtDate(tk.due)+(overdue?'<span class="overdue-tag">просрочено</span>':'')+'</td>'
+        + '<td class="priority-'+pr+'"><span class="priority-dot"></span>'+PRIORITY_LABEL[pr]+'</td>'
+        + '<td><select class="status-select status-'+st+'" id="status-'+esc(tk.id)+'" aria-label="Статус задачи" data-action="set-status" data-block="'+esc(block.id)+'" data-task="'+esc(tk.id)+'">'
+        +   Object.keys(STATUS_LABEL).map(function(s){ return '<option value="'+s+'"'+(s===st?' selected':'')+'>'+STATUS_LABEL[s]+'</option>'; }).join('')
+        + '</select></td>'
+        + '<td class="col-actions"><button class="icon-btn" type="button" data-action="edit-task" data-block="'+esc(block.id)+'" data-task="'+esc(tk.id)+'" title="Изменить" aria-label="Изменить задачу">✎</button>'
+        + '<button class="icon-btn danger" type="button" data-action="delete-task" data-block="'+esc(block.id)+'" data-task="'+esc(tk.id)+'" title="Удалить" aria-label="Удалить задачу">✕</button></td>'
+        + '</tr>';
+    }).join('');
+
+    content.innerHTML = '<div class="table-scroll"><table class="task-table"><thead><tr>'
+      + '<th>№</th><th>Задача</th><th>Ответственный</th><th>Срок</th><th>Приоритет</th><th>Статус</th><th><span hidden>Действия</span></th>'
+      + '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+
+  function kpiRowHtml(blockId, kp){
+    var st = kpiStatus(kp);
+    var fill = st.cls==='done' ? ' done' : (st.cls==='progress' ? ' mid' : '');
+    var hasCurrent = !(kp.current==='' || kp.current==null);
+    return '<tr>'
+      + '<td class="kpi-name"><div class="task-title-text" data-action="edit-kpi" data-block="'+esc(blockId)+'" data-kpi="'+esc(kp.id)+'" tabindex="0" role="button">'+esc(kp.name)+'</div>'
+      + '<span class="kpi-dir">'+(kp.direction==='down'?'↓ чем меньше, тем лучше':'↑ чем больше, тем лучше')+'</span></td>'
+      + '<td class="kpi-num">'+(kp.direction==='down'?'≤ ':'≥ ')+fmtNum(kp.target)+' '+esc(kp.unit)+'</td>'
+      + '<td class="kpi-num">'+(hasCurrent ? fmtNum(kp.current)+' '+esc(kp.unit) : '—')+'</td>'
+      + '<td class="kpi-bar-wrap"><div class="progress"><div class="progress-fill'+fill+'" style="width:'+st.pct+'%"></div></div>'
+      + '<div class="kpi-bar-nums">'+st.pct+'% выполнения</div></td>'
+      + '<td><span class="status-badge '+st.cls+'">'+st.label+'</span></td>'
+      + '<td class="col-actions"><button class="icon-btn" type="button" data-action="edit-kpi" data-block="'+esc(blockId)+'" data-kpi="'+esc(kp.id)+'" title="Изменить" aria-label="Изменить KPI">✎</button>'
+      + '<button class="icon-btn danger" type="button" data-action="delete-kpi" data-block="'+esc(blockId)+'" data-kpi="'+esc(kp.id)+'" title="Удалить" aria-label="Удалить KPI">✕</button></td>'
+      + '</tr>';
+  }
+
+  function renderKpiBlock(block){
+    var stats = blockStats(block);
+    var topbar = document.getElementById('topbar');
+    topbar.innerHTML =
+      '<div><h1 class="topbar-title">'+esc(block.title)+'</h1>'
+      + (block.description ? '<div class="topbar-desc">'+esc(block.description)+'</div>' : '')
+      + '<div style="margin-top:12px;font-size:12.5px;color:var(--color-ink-muted);">'+stats.achieved+' из '+stats.total+' показателей достигнуто · '+stats.pct+'%</div></div>'
+      + '<div class="topbar-actions"><button class="btn btn-primary" type="button" data-action="add-kpi" data-block="'+esc(block.id)+'">+ Добавить KPI</button></div>';
+
+    var content = document.getElementById('content');
+    if(block.kpis.length===0){
+      content.innerHTML = '<div class="empty-block">Показатели ещё не заданы.<br><button class="btn btn-primary" type="button" data-action="add-kpi" data-block="'+esc(block.id)+'">+ Добавить первый KPI</button></div>';
+      return;
+    }
+
+    var groups = {};
+    ROLE_ORDER.forEach(function(r){ groups[r] = []; });
+    block.kpis.forEach(function(kp){ groups[kpiRoleOf(kp)].push(kp); });
+    function achievedIn(list){ return list.filter(function(kp){ return kpiStatus(kp).achieved; }).length; }
+
+    if(kpiFilter!=='all' && groups[kpiFilter].length===0) kpiFilter = 'all';
+
+    var filterHtml = '<div class="kpi-filter-row" role="tablist" aria-label="Категории KPI">'
+      + '<button type="button" role="tab" aria-selected="'+(kpiFilter==='all')+'" class="kpi-filter-btn'+(kpiFilter==='all'?' active':'')+'" data-action="kpi-filter" data-role="all">Все <span>'+achievedIn(block.kpis)+'/'+block.kpis.length+'</span></button>'
+      + ROLE_ORDER.filter(function(r){ return groups[r].length>0; }).map(function(r){
+          return '<button type="button" role="tab" aria-selected="'+(kpiFilter===r)+'" class="kpi-filter-btn'+(kpiFilter===r?' active':'')+'" data-action="kpi-filter" data-role="'+r+'">'+ROLE_LABEL[r]+' <span>'+achievedIn(groups[r])+'/'+groups[r].length+'</span></button>';
+        }).join('')
+      + '</div>';
+
+    var rolesToRender = kpiFilter==='all' ? ROLE_ORDER.filter(function(r){ return groups[r].length>0; }) : [kpiFilter];
+    var tablesHtml = rolesToRender.map(function(r){
+      var kpis = groups[r];
+      var achieved = achievedIn(kpis);
+      var rows = kpis.map(function(kp){ return kpiRowHtml(block.id, kp); }).join('');
+      return '<section class="kpi-group">'
+        + '<h2 class="kpi-group-title">'+ROLE_LABEL[r]+'<span class="kpi-group-count">'+achieved+' из '+kpis.length+' достигнуто · '+Math.round(achieved/kpis.length*100)+'%</span></h2>'
+        + '<div class="table-scroll"><table class="kpi-table"><thead><tr>'
+        + '<th>Показатель</th><th>Цель</th><th>Текущее</th><th>Выполнение</th><th>Статус</th><th><span hidden>Действия</span></th>'
+        + '</tr></thead><tbody>'+rows+'</tbody></table></div>'
+        + '</section>';
+    }).join('');
+
+    content.innerHTML = filterHtml + tablesHtml;
+  }
+
+  /* ============ Мутации ============ */
+  function findBlock(id){ return state.blocks.find(function(b){ return b.id===id; }); }
+
+  function addBlock(title, description, kind){
+    var block = {id:uid('b'), kind: kind==='kpi' ? 'kpi' : 'tasks', title:title, description:description||''};
+    if(block.kind==='kpi') block.kpis = []; else block.tasks = [];
+    state.blocks.push(block);
+    currentBlockId = block.id;
+    saveState();
+  }
+  function deleteBlock(id){
+    state.blocks = state.blocks.filter(function(b){ return b.id!==id; });
+    if(currentBlockId===id) currentBlockId='overview';
+    saveState();
+  }
+  function addTask(blockId, data){
+    var b = findBlock(blockId); if(!b) return;
+    b.tasks.push(Object.assign({id:uid('t')}, data));
+    saveState();
+  }
+  function updateTask(blockId, taskId, data){
+    var b = findBlock(blockId); if(!b) return;
+    var tk = b.tasks.find(function(x){ return x.id===taskId; }); if(!tk) return;
+    Object.assign(tk, data);
+    saveState();
+  }
+  function deleteTask(blockId, taskId){
+    var b = findBlock(blockId); if(!b) return;
+    b.tasks = b.tasks.filter(function(x){ return x.id!==taskId; });
+    saveState();
+  }
+  function setTaskStatus(blockId, taskId, status){
+    var b = findBlock(blockId); if(!b) return;
+    var tk = b.tasks.find(function(x){ return x.id===taskId; }); if(!tk) return;
+    tk.status = status;
+    saveState();
+  }
+  function addKpi(blockId, data){
+    var b = findBlock(blockId); if(!b) return;
+    b.kpis.push(Object.assign({id:uid('k')}, data));
+    saveState();
+  }
+  function updateKpi(blockId, kpiId, data){
+    var b = findBlock(blockId); if(!b) return;
+    var kp = b.kpis.find(function(x){ return x.id===kpiId; }); if(!kp) return;
+    Object.assign(kp, data);
+    saveState();
+  }
+  function deleteKpi(blockId, kpiId){
+    var b = findBlock(blockId); if(!b) return;
+    b.kpis = b.kpis.filter(function(x){ return x.id!==kpiId; });
+    saveState();
+  }
+
+  /* ============ Модальные окна и уведомления ============ */
+  var overlay = document.getElementById('modalOverlay');
+  var modalEl = document.getElementById('modal');
+  var lastFocus = null;
+  function openModal(html){
+    lastFocus = document.activeElement;
+    modalEl.innerHTML = html;
+    overlay.classList.add('open');
+    var first = modalEl.querySelector('input:not([type=radio]),select,textarea,button[data-action="confirm-yes"]');
+    if(first) first.focus();
+  }
+  function closeModal(){
+    overlay.classList.remove('open'); modalEl.innerHTML='';
+    pendingConfirm = null;
+    if(lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  }
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) closeModal(); });
+
+  var toastTimer = null;
+  function showToast(msg){
+    var el = document.getElementById('toast');
+    el.textContent = msg; el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.hidden = true; }, 3500);
+  }
+
+  function taskModalHtml(blockId, task){
+    var isEdit = !!task;
+    task = task || {title:'',owner:'',due:'',priority:'medium',status:'todo',notes:''};
+    return '<form data-form="task" data-block="'+esc(blockId)+'"'+(isEdit?' data-task="'+esc(task.id)+'"':'')+'>'
+      + '<h3>'+(isEdit?'Изменить задачу':'Новая задача')+'</h3>'
+      + '<div class="modal-sub">'+esc((findBlock(blockId)||{}).title||'')+'</div>'
+      + '<div class="field"><label for="f-task-title">Название</label><input type="text" id="f-task-title" name="title" required value="'+esc(task.title)+'"></div>'
+      + '<div class="field-row"><div class="field"><label for="f-task-owner">Ответственный</label><input type="text" id="f-task-owner" name="owner" value="'+esc(task.owner)+'"></div>'
+      + '<div class="field"><label for="f-task-due">Срок</label><input type="date" id="f-task-due" name="due" value="'+esc(task.due)+'"></div></div>'
+      + '<div class="field-row"><div class="field"><label for="f-task-priority">Приоритет</label><select id="f-task-priority" name="priority">'
+      +   Object.keys(PRIORITY_LABEL).map(function(p){ return '<option value="'+p+'"'+(p===task.priority?' selected':'')+'>'+PRIORITY_LABEL[p]+'</option>'; }).join('')
+      + '</select></div>'
+      + '<div class="field"><label for="f-task-status">Статус</label><select id="f-task-status" name="status">'
+      +   Object.keys(STATUS_LABEL).map(function(s){ return '<option value="'+s+'"'+(s===task.status?' selected':'')+'>'+STATUS_LABEL[s]+'</option>'; }).join('')
+      + '</select></div></div>'
+      + '<div class="field"><label for="f-task-notes">Примечание</label><textarea id="f-task-notes" name="notes" rows="2">'+esc(task.notes)+'</textarea></div>'
+      + '<div class="modal-actions">'
+      + (isEdit ? '<button type="button" class="btn btn-ghost" data-action="delete-task" data-block="'+esc(blockId)+'" data-task="'+esc(task.id)+'">Удалить</button>' : '<span></span>')
+      + '<div class="modal-actions-right"><button type="button" class="btn" data-action="close-modal">Отмена</button><button type="submit" class="btn btn-primary">Сохранить</button></div>'
+      + '</div></form>';
+  }
+
+  function blockModalHtml(){
+    return '<form data-form="block">'
+      + '<h3>Новый блок</h3>'
+      + '<div class="modal-sub">Блок — это отдельный проект или направление.</div>'
+      + '<div class="field"><label for="f-block-title">Название</label><input type="text" id="f-block-title" name="title" required placeholder="Например, Закупка оборудования"></div>'
+      + '<div class="field"><label for="f-block-desc">Описание</label><textarea id="f-block-desc" name="description" rows="2"></textarea></div>'
+      + '<fieldset class="field"><legend>Тип блока</legend><div class="kind-options">'
+      +   '<label class="kind-option"><input type="radio" id="f-block-kind-tasks" name="kind" value="tasks" checked><span>Реестр задач<small>Задачи, сроки, ответственные</small></span></label>'
+      +   '<label class="kind-option"><input type="radio" id="f-block-kind-kpi" name="kind" value="kpi"><span>KPI<small>Показатели с целями по категориям</small></span></label>'
+      + '</div></fieldset>'
+      + '<div class="modal-actions"><span></span><div class="modal-actions-right">'
+      + '<button type="button" class="btn" data-action="close-modal">Отмена</button><button type="submit" class="btn btn-primary">Создать блок</button></div></div>'
+      + '</form>';
+  }
+
+  function kpiModalHtml(blockId, kpi){
+    var isEdit = !!kpi;
+    var defaultRole = (kpiFilter!=='all') ? kpiFilter : 'process';
+    kpi = kpi || {name:'',target:'',current:'',unit:'%',direction:'up',role:defaultRole};
+    return '<form data-form="kpi" data-block="'+esc(blockId)+'"'+(isEdit?' data-kpi="'+esc(kpi.id)+'"':'')+'>'
+      + '<h3>'+(isEdit?'Изменить KPI':'Новый KPI')+'</h3>'
+      + '<div class="modal-sub">Статус рассчитается автоматически по цели, текущему значению и направлению.</div>'
+      + '<div class="field"><label for="f-kpi-name">Название показателя</label><input type="text" id="f-kpi-name" name="name" required value="'+esc(kpi.name)+'"></div>'
+      + '<div class="field"><label for="f-kpi-role">Категория</label><select id="f-kpi-role" name="role">'
+      +   ROLE_ORDER.map(function(r){ return '<option value="'+r+'"'+(r===kpiRoleOf(kpi)?' selected':'')+'>'+ROLE_LABEL[r]+'</option>'; }).join('')
+      + '</select></div>'
+      + '<div class="field-row"><div class="field"><label for="f-kpi-target">Целевое значение</label><input type="number" step="any" id="f-kpi-target" name="target" required value="'+esc(kpi.target)+'"></div>'
+      + '<div class="field"><label for="f-kpi-current">Текущее значение</label><input type="number" step="any" id="f-kpi-current" name="current" placeholder="не измерено" value="'+esc(kpi.current)+'"></div></div>'
+      + '<div class="field-row"><div class="field"><label for="f-kpi-unit">Единица измерения</label><input type="text" id="f-kpi-unit" name="unit" value="'+esc(kpi.unit)+'" placeholder="%, мин., случ."></div>'
+      + '<div class="field"><label for="f-kpi-direction">Направление</label><select id="f-kpi-direction" name="direction">'
+      +   '<option value="up"'+(kpi.direction!=='down'?' selected':'')+'>Чем больше, тем лучше</option>'
+      +   '<option value="down"'+(kpi.direction==='down'?' selected':'')+'>Чем меньше, тем лучше</option>'
+      + '</select></div></div>'
+      + '<div class="modal-actions">'
+      + (isEdit ? '<button type="button" class="btn btn-ghost" data-action="delete-kpi" data-block="'+esc(blockId)+'" data-kpi="'+esc(kpi.id)+'">Удалить</button>' : '<span></span>')
+      + '<div class="modal-actions-right"><button type="button" class="btn" data-action="close-modal">Отмена</button><button type="submit" class="btn btn-primary">Сохранить</button></div>'
+      + '</div></form>';
+  }
+
+  function confirmModalHtml(message, yesLabel){
+    return '<div data-form="confirm">'
+      + '<h3>Подтвердите удаление</h3>'
+      + '<div class="modal-sub" style="margin-bottom:20px;">'+esc(message)+'</div>'
+      + '<div class="modal-actions"><span></span><div class="modal-actions-right">'
+      + '<button type="button" class="btn" data-action="close-modal">Отмена</button>'
+      + '<button type="button" class="btn btn-primary" data-action="confirm-yes">'+esc(yesLabel||'Удалить')+'</button></div></div>'
+      + '</div>';
+  }
+  var pendingConfirm = null;
+  function askConfirm(message, yesLabel, onYes){
+    openModal(confirmModalHtml(message, yesLabel));
+    pendingConfirm = onYes;
+  }
+
+  /* ============ Отчёт ============ */
+  function buildReport(){
+    var lines = [];
+    lines.push('# Отчёт по проектам — Здравоохранение Астана');
+    lines.push('');
+    lines.push('Дата формирования: '+fmtDate(todayStr()));
+    lines.push('');
+    var agg = aggregate();
+    lines.push('## Сводка');
+    lines.push('');
+    lines.push('- Всего задач: '+agg.total);
+    lines.push('- Выполнено: '+agg.done);
+    lines.push('- В работе: '+agg.progress);
+    lines.push('- Заблокировано: '+agg.blocked);
+    lines.push('- Просрочено: '+agg.overdue);
+    lines.push('');
+    lines.push('### Статус по блокам');
+    lines.push('');
+    state.blocks.forEach(function(b){
+      var s = blockStats(b);
+      if(b.kind==='kpi') lines.push('- '+b.title+': достигнуто '+s.achieved+' из '+s.total+' KPI ('+s.pct+'%)');
+      else lines.push('- '+b.title+': выполнено '+s.done+' из '+s.total+' ('+s.pct+'%)'+(s.overdue?', просрочено: '+s.overdue:''));
+    });
+    lines.push('');
+    state.blocks.forEach(function(b){
+      lines.push('## '+b.title);
+      lines.push('');
+      if(b.description){ lines.push(b.description); lines.push(''); }
+      if(b.kind==='kpi'){
+        ROLE_ORDER.forEach(function(r){
+          var kpis = b.kpis.filter(function(kp){ return kpiRoleOf(kp)===r; });
+          if(kpis.length===0) return;
+          var ach = kpis.filter(function(kp){ return kpiStatus(kp).achieved; }).length;
+          lines.push('### '+ROLE_LABEL[r]+' ('+ach+' из '+kpis.length+' достигнуто)');
+          lines.push('');
+          kpis.forEach(function(kp){
+            var st = kpiStatus(kp);
+            var cur = (kp.current==='' || kp.current==null) ? '—' : kp.current;
+            lines.push('- ['+(st.achieved?'x':' ')+'] '+kp.name+': '+cur+' при цели '+(kp.direction==='down'?'≤ ':'≥ ')+kp.target+' '+kp.unit+' — '+st.label+' ('+st.pct+'%)');
+          });
+          lines.push('');
+        });
+      } else {
+        var stats = blockStats(b);
+        lines.push('Прогресс: '+stats.done+'/'+stats.total+' ('+stats.pct+'%)'+(stats.overdue?', просрочено: '+stats.overdue:''));
+        lines.push('');
+        b.tasks.forEach(function(tk){
+          lines.push('- ['+(tk.status==='done'?'x':' ')+'] '+tk.title+' — '+(tk.owner||'без ответственного')+', срок: '+fmtDate(tk.due)+(isOverdue(tk)?' (ПРОСРОЧЕНО)':'')+', приоритет: '+(PRIORITY_LABEL[tk.priority]||'—')+', статус: '+(STATUS_LABEL[tk.status]||'—')+(tk.notes?' — '+tk.notes:''));
+        });
+        lines.push('');
+      }
+    });
+    return lines.join('\n');
+  }
+  async function downloadReport(){
+    if(!downloads){ try{ downloads = await claude.use('downloads'); }catch(e){} }
+    if(!downloads){ showToast('Скачивание файлов недоступно в этом окне просмотра.'); return; }
+    var filename = 'otchet-proekty-'+todayStr()+'.md';
+    try{
+      await downloads.save({filename:filename, data:buildReport()});
+    }catch(e){ /* пользователь отменил сохранение */ }
+  }
+
+  /* ============ Делегирование событий ============ */
+  document.getElementById('addBlockBtn').addEventListener('click', function(){ openModal(blockModalHtml()); });
+
+  function handleAction(el, e){
+    var action = el.getAttribute('data-action');
+    if(action==='nav-select'){
+      currentBlockId = el.getAttribute('data-block');
+      render();
+    } else if(action==='delete-block'){
+      e.stopPropagation();
+      var bid = el.getAttribute('data-block');
+      var b = findBlock(bid);
+      if(!b) return;
+      var what = b.kind==='kpi' ? 'вместе со всеми показателями ('+b.kpis.length+')' : 'вместе со всеми задачами ('+b.tasks.length+')';
+      askConfirm('Блок «'+b.title+'» будет удалён '+what+'. Отменить это действие нельзя.', 'Удалить блок', function(){ deleteBlock(bid); showToast('Блок удалён'); });
+    } else if(action==='add-task'){
+      openModal(taskModalHtml(el.getAttribute('data-block'), null));
+    } else if(action==='edit-task'){
+      var b1 = findBlock(el.getAttribute('data-block'));
+      var task = b1 && b1.tasks.find(function(x){ return x.id===el.getAttribute('data-task'); });
+      if(task) openModal(taskModalHtml(b1.id, task));
+    } else if(action==='delete-task'){
+      var bid2 = el.getAttribute('data-block'), tid = el.getAttribute('data-task');
+      askConfirm('Задача будет удалена из реестра.', 'Удалить задачу', function(){ deleteTask(bid2, tid); showToast('Задача удалена'); });
+    } else if(action==='add-kpi'){
+      openModal(kpiModalHtml(el.getAttribute('data-block'), null));
+    } else if(action==='edit-kpi'){
+      var b2 = findBlock(el.getAttribute('data-block'));
+      var kpi = b2 && b2.kpis.find(function(x){ return x.id===el.getAttribute('data-kpi'); });
+      if(kpi) openModal(kpiModalHtml(b2.id, kpi));
+    } else if(action==='delete-kpi'){
+      var bid3 = el.getAttribute('data-block'), kid = el.getAttribute('data-kpi');
+      askConfirm('Показатель будет удалён.', 'Удалить KPI', function(){ deleteKpi(bid3, kid); showToast('Показатель удалён'); });
+    } else if(action==='close-modal'){
+      closeModal();
+    } else if(action==='confirm-yes'){
+      var fn = pendingConfirm;
+      closeModal();
+      if(fn) fn();
+    } else if(action==='download-report'){
+      downloadReport();
+    } else if(action==='kpi-filter'){
+      kpiFilter = el.getAttribute('data-role');
+      render();
+    }
+  }
+
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('[data-action]');
+    if(!el || el.tagName==='SELECT') return;
+    handleAction(el, e);
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' && overlay.classList.contains('open')){ closeModal(); return; }
+    if((e.key==='Enter' || e.key===' ') && e.target.matches && e.target.matches('[role="button"][data-action]')){
+      e.preventDefault();
+      handleAction(e.target, e);
+    }
+  });
+
+  document.addEventListener('change', function(e){
+    var el = e.target.closest('[data-action="set-status"]');
+    if(!el) return;
+    setTaskStatus(el.getAttribute('data-block'), el.getAttribute('data-task'), el.value);
+  });
+
+  document.addEventListener('submit', function(e){
+    var form = e.target.closest('form[data-form]');
+    if(!form) return;
+    e.preventDefault();
+    var kind = form.getAttribute('data-form');
+    var fd = new FormData(form);
+    if(kind==='task'){
+      var blockId = form.getAttribute('data-block');
+      var taskId = form.getAttribute('data-task');
+      var data = {title:(fd.get('title')||'').trim(), owner:(fd.get('owner')||'').trim(), due: fd.get('due')||'', priority: fd.get('priority'), status: fd.get('status'), notes:(fd.get('notes')||'').trim()};
+      if(!data.title) return;
+      closeModal();
+      if(taskId){ updateTask(blockId, taskId, data); showToast('Задача сохранена'); } else { addTask(blockId, data); showToast('Задача добавлена'); }
+    } else if(kind==='block'){
+      var title = (fd.get('title')||'').trim();
+      if(!title) return;
+      closeModal();
+      addBlock(title, (fd.get('description')||'').trim(), fd.get('kind'));
+      showToast('Блок «'+title+'» создан');
+    } else if(kind==='kpi'){
+      var blockId2 = form.getAttribute('data-block');
+      var kpiId = form.getAttribute('data-kpi');
+      var curRaw = (fd.get('current')||'').trim();
+      var data2 = {
+        name:(fd.get('name')||'').trim(),
+        target: Number(fd.get('target'))||0,
+        current: curRaw==='' ? '' : (Number(curRaw)||0),
+        unit:(fd.get('unit')||'').trim(),
+        direction: fd.get('direction')==='down' ? 'down' : 'up',
+        role: ROLE_LABEL[fd.get('role')] ? fd.get('role') : 'process'
+      };
+      if(!data2.name) return;
+      closeModal();
+      if(kpiId){ updateKpi(blockId2, kpiId, data2); showToast('Показатель сохранён'); } else { addKpi(blockId2, data2); showToast('Показатель добавлен'); }
+    }
+  });
+
+  render();
+  initDb();
+})();
+</script>
+</body>
+</html>
